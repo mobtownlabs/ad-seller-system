@@ -474,8 +474,14 @@ redis-cli ping
 ## Related Projects
 
 - [ad-buyer-system](https://github.com/mobtownlabs/ad-buyer-system) - Buyer-side agent system (agencies, advertisers)
-- [IAB agentic-direct](https://github.com/InteractiveAdvertisingBureau/agentic-direct) - IAB Tech Lab reference server
-- [IAB agentic-advertising](https://github.com/InteractiveAdvertisingBureau/agentic-advertising) - IAB Tech Lab specifications
+
+### IAB Tech Lab Resources
+
+- [agentic-direct](https://github.com/InteractiveAdvertisingBureau/agentic-direct) - IAB Tech Lab reference implementation
+- [Demo Client](https://agentic-direct-client-hwgrypmndq-uk.a.run.app/) - Hosted web client
+- [A2A Server](https://agentic-direct-server-hwgrypmndq-uk.a.run.app/) - Agent-to-Agent protocol endpoint
+- [MCP Info](https://agentic-direct-server-hwgrypmndq-uk.a.run.app/mcp/info) - MCP server metadata
+- [MCP SSE](https://agentic-direct-server-hwgrypmndq-uk.a.run.app/mcp/sse) - MCP server-sent events endpoint
 
 ---
 
