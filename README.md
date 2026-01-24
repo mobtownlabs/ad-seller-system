@@ -9,6 +9,7 @@ The Ad Seller System lets you:
 - **Automate deal negotiations** with AI agents that understand your inventory and pricing rules
 - **Offer tiered pricing** based on buyer identity (public, agency, advertiser)
 - **Generate Deal IDs** compatible with any DSP (The Trade Desk, Amazon, DV360, etc.)
+- **Validate audience targeting** using IAB User Context Protocol (UCP) for embedding-based matching
 - **Connect to IAB OpenDirect servers** for standardized programmatic direct workflows
 - **Expose your inventory** via REST API, CLI, or conversational chat interface
 
@@ -18,6 +19,162 @@ The Ad Seller System lets you:
 - **SSPs** selling curated inventory packages to agencies
 - **Ad ops teams** looking to reduce manual deal setup
 - **Anyone** wanting to experiment with agentic advertising workflows
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           AD SELLER SYSTEM                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║                 LEVEL 1: ORCHESTRATION (Claude Opus)                  ║  │
+│  ║  ┌─────────────────────────────────────────────────────────────────┐  ║  │
+│  ║  │                    Inventory Manager                            │  ║  │
+│  ║  │   • Yield optimization          • Deal acceptance decisions     │  ║  │
+│  ║  │   • Portfolio strategy          • Cross-sell opportunities      │  ║  │
+│  ║  └─────────────────────────────────────────────────────────────────┘  ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║             LEVEL 2: CHANNEL SPECIALISTS (Claude Sonnet)              ║  │
+│  ║  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐         ║  │
+│  ║  │ Display │ │  Video  │ │   CTV   │ │ Mobile  │ │ Native  │         ║  │
+│  ║  │Inventory│ │Inventory│ │Inventory│ │   App   │ │Inventory│         ║  │
+│  ║  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘         ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                    │                                        │
+│                                    ▼                                        │
+│  ╔═══════════════════════════════════════════════════════════════════════╗  │
+│  ║              LEVEL 3: FUNCTIONAL AGENTS (Claude Sonnet)               ║  │
+│  ║  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐    ║  │
+│  ║  │ Pricing  │ │  Avails  │ │ Proposal │ │  Upsell  │ │ Audience │    ║  │
+│  ║  │  Agent   │ │  Agent   │ │  Review  │ │  Agent   │ │ Validator│    ║  │
+│  ║  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘    ║  │
+│  ╚═══════════════════════════════════════════════════════════════════════╝  │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  TOOLS                                                                      │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │ Pricing: PriceCalculator, FloorManager, DiscountEngine                 │ │
+│  │ Inventory: AvailsChecker, CapacityForecaster, AllocationManager        │ │
+│  │ Deals: ProposalGenerator, CounterOfferBuilder, DealIDGenerator         │ │
+│  │ Audience: AudienceValidation, AudienceCapability, CoverageCalculator   │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  INTERFACES: CLI │ REST API │ Chat                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  STORAGE: SQLite (dev) │ Redis (prod)                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  PROTOCOLS                                                                  │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────┐  │
+│  │ MCP (33 OpenDirect   │  │ A2A (Natural Language│  │ UCP (Audience    │  │
+│  │      Tools)          │  │      Queries)        │  │    Embeddings)   │  │
+│  └──────────────────────┘  └──────────────────────┘  └──────────────────┘  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  SERVER: IAB Tech Lab agentic-direct (OpenDirect 2.1)                       │
+│  https://agentic-direct-server-hwgrypmndq-uk.a.run.app                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Agent Hierarchy
+
+| Level | Agent | Model | Temperature | Role |
+|-------|-------|-------|-------------|------|
+| **1** | Inventory Manager | Claude Opus | 0.3 | Strategic orchestration, yield optimization, portfolio management |
+| **2** | Display Inventory Specialist | Claude Sonnet | 0.5 | Display ad inventory (IAB units, rich media, viewability) |
+| **2** | Video Inventory Specialist | Claude Sonnet | 0.5 | Video inventory (pre-roll, mid-roll, outstream, CPCV) |
+| **2** | CTV Inventory Specialist | Claude Sonnet | 0.5 | CTV inventory (streaming, FAST, household targeting) |
+| **2** | Mobile App Specialist | Claude Sonnet | 0.5 | Mobile app inventory (rewarded video, interstitials, ATT) |
+| **2** | Native Inventory Specialist | Claude Sonnet | 0.5 | Native content (in-feed, widgets, sponsored content) |
+| **3** | Pricing Agent | Claude Sonnet | 0.2 | Pricing calculations, floor management, discount application |
+| **3** | Availability Agent | Claude Sonnet | 0.2 | Inventory forecasting, capacity planning, delivery confidence |
+| **3** | Proposal Review Agent | Claude Sonnet | 0.3 | Proposal evaluation, counter-offer generation, acceptance decisions |
+| **3** | Upsell Agent | Claude Sonnet | 0.3 | Cross-sell identification, volume upgrades, alternative recommendations |
+| **3** | Audience Validator | Claude Sonnet | 0.2 | UCP-based audience validation, coverage estimation, gap analysis |
+
+---
+
+## UCP: User Context Protocol
+
+The Ad Seller System implements IAB Tech Lab's **User Context Protocol (UCP)** for privacy-preserving audience validation between buyers and sellers.
+
+### What UCP Does
+
+UCP enables real-time audience matching by exchanging embeddings (256-1024 dimension vectors) that encode:
+
+- **Identity Signals** - Hashed user IDs, device graphs
+- **Contextual Signals** - Page content, keywords, categories
+- **Reinforcement Signals** - Conversion data, feedback loops
+
+### Audience Validator Agent
+
+The **Audience Validator Agent** (Level 3) uses UCP to:
+
+1. **Validate Buyer Requests** - Check if requested audience targeting can be fulfilled
+2. **Estimate Coverage** - Calculate what percentage of inventory matches the audience
+3. **Identify Gaps** - Find audience capabilities the seller cannot support
+4. **Suggest Alternatives** - Recommend similar audiences when exact match unavailable
+5. **Compute Similarity** - Use UCP embeddings to score audience alignment
+
+### Audience Tools
+
+| Tool | Purpose |
+|------|---------|
+| `AudienceValidationTool` | Validate buyer audience requests against product capabilities |
+| `AudienceCapabilityTool` | Report available audience capabilities for products |
+| `CoverageCalculatorTool` | Calculate coverage percentage for targeting combinations |
+
+### Audience Validation Flow
+
+```
+Buyer Proposal → Audience Validator Agent → UCP Validation → Coverage Estimate → Proposal Decision
+                        │
+                        ├─ Validate against product capabilities
+                        ├─ Compute UCP similarity score
+                        ├─ Calculate coverage percentage
+                        └─ Identify gaps and alternatives
+```
+
+### Example: Audience Validation in Proposal Review
+
+```python
+from ad_seller.tools.audience import (
+    AudienceValidationTool,
+    AudienceCapabilityTool,
+    CoverageCalculatorTool,
+)
+
+# Validate a buyer's audience request
+validation_tool = AudienceValidationTool()
+result = validation_tool._run(
+    buyer_audience={
+        "demographics": {"age": "25-54", "income": "high"},
+        "interests": ["technology", "business"],
+        "behaviors": ["in-market-auto"]
+    },
+    product_id="ctv-premium"
+)
+
+# Result includes:
+# - validation_status: "valid" | "partial_match" | "no_match"
+# - coverage_percentage: 0-100
+# - ucp_similarity_score: 0.0-1.0
+# - gaps: ["in-market-auto not available"]
+# - alternatives: ["in-market-luxury-goods"]
+```
+
+### UCP Technical Details
+
+| Property | Value |
+|----------|-------|
+| **Content-Type** | `application/vnd.ucp.embedding+json; v=1` |
+| **Embedding Dimensions** | 256-1024 |
+| **Similarity Metric** | Cosine (default), Dot Product, L2 |
+| **Consent Required** | Yes (IAB TCF v2) |
 
 ---
 
@@ -198,6 +355,33 @@ async def main():
 asyncio.run(main())
 ```
 
+### Example 4: Validate Audience with UCP
+
+```python
+import asyncio
+from ad_seller.clients import UCPClient, UCPExchangeResult
+
+async def main():
+    client = UCPClient()
+
+    # Validate a buyer's audience request against your capabilities
+    result = await client.validate_buyer_audience(
+        buyer_embedding={
+            "embedding_type": "user_intent",
+            "vector": [...],  # 256-1024 dimension vector
+            "dimension": 512,
+        },
+        product_id="ctv-premium"
+    )
+
+    print(f"Similarity score: {result.similarity_score}")
+    print(f"Recommendation: {result.recommendation}")
+    # Output: Similarity score: 0.87
+    # Output: Recommendation: accept
+
+asyncio.run(main())
+```
+
 ---
 
 ## Tiered Pricing System
@@ -232,6 +416,42 @@ Final Price:     $15.30 CPM (23.5% total savings)
 
 ---
 
+## Protocol Options
+
+The system supports multiple protocols for communicating with OpenDirect servers:
+
+| Protocol | Best For | Speed | Flexibility |
+|----------|----------|-------|-------------|
+| **MCP** | Structured operations (create, update, list) | Fast | Deterministic, 33 tools |
+| **A2A** | Natural language queries and discovery | Moderate | Flexible, conversational |
+| **UCP** | Audience embedding exchange | Fast | Privacy-preserving matching |
+
+### When to Use Each
+
+- **MCP**: Managing products, processing orders, automated deal workflows
+- **A2A**: Responding to buyer queries, recommendations, negotiation conversations
+- **UCP**: Audience validation, coverage estimation, capability reporting
+
+---
+
+## Available MCP Tools
+
+The IAB Tech Lab server provides 33 OpenDirect tools that both buyers and sellers use:
+
+| Category | Tools |
+|----------|-------|
+| **Accounts** | `create_account`, `update_account`, `get_account`, `list_accounts` |
+| **Orders** | `create_order`, `update_order`, `get_order`, `list_orders` |
+| **Lines** | `create_line`, `update_line`, `get_line`, `list_lines` |
+| **Products** | `get_product`, `list_products`, `search_products` |
+| **Creatives** | `create_creative`, `update_creative`, `get_creative`, `list_creatives` |
+| **Assignments** | `create_assignment`, `delete_assignment`, `get_assignment`, `list_assignments` |
+| **Organizations** | `create_organization`, `update_organization`, `get_organization`, `list_organizations` |
+| **Change Requests** | `create_changerequest`, `get_changerequest`, `list_changerequests` |
+| **Messages** | `create_message`, `get_message`, `list_messages` |
+
+---
+
 ## REST API
 
 Start the API server:
@@ -250,6 +470,7 @@ uvicorn ad_seller.interfaces.api.main:app --reload --port 8000
 | `POST` | `/proposals` | Submit a proposal |
 | `POST` | `/deals` | Generate a Deal ID |
 | `POST` | `/discovery` | Natural language query |
+| `POST` | `/audience/validate` | Validate audience targeting (UCP) |
 
 ### Example: Get Pricing via API
 
@@ -357,6 +578,14 @@ PROGRAMMATIC_FLOOR_MULTIPLIER=1.2
 PREFERRED_DEAL_DISCOUNT_MAX=0.15
 
 # ─────────────────────────────────────────────────────────────────
+# UCP (User Context Protocol)
+# ─────────────────────────────────────────────────────────────────
+UCP_ENABLED=true
+UCP_EMBEDDING_DIMENSION=512
+UCP_SIMILARITY_THRESHOLD=0.5
+UCP_CONSENT_REQUIRED=true
+
+# ─────────────────────────────────────────────────────────────────
 # AD SERVER INTEGRATION (optional)
 # ─────────────────────────────────────────────────────────────────
 # Google Ad Manager
@@ -379,38 +608,52 @@ LLM_TEMPERATURE=0.3
 
 ---
 
-## Architecture
+## Project Structure
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      Ad Seller System                           │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Level 1: Strategic (Claude Opus)                               │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │              Inventory Manager                             │  │
-│  │   • Yield optimization    • Deal acceptance decisions      │  │
-│  │   • Portfolio strategy    • Cross-sell opportunities       │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                              │                                  │
-│  Level 2: Specialists (Claude Sonnet)                           │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
-│  │ Display │ │  Video  │ │   CTV   │ │ Mobile  │ │ Native  │   │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘   │
-│                              │                                  │
-│  Level 3: Functional (Claude Sonnet)                            │
-│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐       │
-│  │  Pricing  │ │  Avails   │ │ Proposal  │ │  Upsell   │       │
-│  │   Agent   │ │   Agent   │ │  Review   │ │   Agent   │       │
-│  └───────────┘ └───────────┘ └───────────┘ └───────────┘       │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  Interfaces: CLI │ REST API │ Chat                              │
-├─────────────────────────────────────────────────────────────────┤
-│  Storage: SQLite (dev) │ Redis (prod)                           │
-├─────────────────────────────────────────────────────────────────┤
-│  Protocol: OpenDirect 2.1 (prod) │ OpenDirect 3.0 (experimental)│
-└─────────────────────────────────────────────────────────────────┘
+ad_seller_system/
+├── examples/              # Runnable example scripts
+│   ├── tiered_pricing.py
+│   ├── opendirect_connection.py
+│   ├── storage_demo.py
+│   └── audience_validation.py
+├── src/ad_seller/
+│   ├── agents/            # CrewAI agents
+│   │   ├── level1/        # Inventory Manager
+│   │   ├── level2/        # Channel Specialists (Display, Video, CTV, Mobile, Native)
+│   │   └── level3/        # Functional Agents (incl. Audience Validator)
+│   ├── clients/           # API clients
+│   │   ├── unified_client.py     # Unified protocol access
+│   │   ├── opendirect21_client.py # OpenDirect 2.1
+│   │   ├── opendirect30_client.py # OpenDirect 3.0
+│   │   ├── a2a_client.py         # A2A natural language
+│   │   └── ucp_client.py         # UCP embedding exchange
+│   ├── crews/             # CrewAI crews
+│   │   └── inventory_crews.py    # Channel-specific crews
+│   ├── engines/           # Business logic engines
+│   │   └── pricing_rules_engine.py
+│   ├── flows/             # Workflow orchestration
+│   │   └── proposal_handling_flow.py # Proposal evaluation (with audience validation)
+│   ├── interfaces/        # User interfaces
+│   │   ├── api/           # FastAPI REST server
+│   │   └── cli/           # Typer CLI
+│   ├── models/            # Pydantic models
+│   │   ├── opendirect.py        # OpenDirect entities
+│   │   ├── flow_state.py        # Flow state models
+│   │   ├── buyer_identity.py    # Buyer identity models
+│   │   ├── pricing_tiers.py     # Tiered pricing models
+│   │   └── ucp.py               # UCP models (embeddings, capabilities)
+│   ├── storage/           # Storage backends
+│   │   ├── sqlite_backend.py
+│   │   └── redis_backend.py
+│   └── tools/             # CrewAI tools
+│       ├── pricing/       # Pricing tools
+│       ├── inventory/     # Inventory tools
+│       ├── deals/         # Deal tools
+│       └── audience/      # Audience tools (validation, capability, coverage)
+├── tests/
+│   └── unit/              # Unit tests
+└── scripts/               # Test and utility scripts
 ```
 
 ---
@@ -482,6 +725,7 @@ redis-cli ping
 - [A2A Server](https://agentic-direct-server-hwgrypmndq-uk.a.run.app/) - Agent-to-Agent protocol endpoint
 - [MCP Info](https://agentic-direct-server-hwgrypmndq-uk.a.run.app/mcp/info) - MCP server metadata
 - [MCP SSE](https://agentic-direct-server-hwgrypmndq-uk.a.run.app/mcp/sse) - MCP server-sent events endpoint
+- [UCP Specification](https://iabtechlab.com/standards/user-context-protocol/) - User Context Protocol documentation
 
 ---
 
