@@ -49,6 +49,16 @@ class ProductDefinition(BaseModel):
     maximum_impressions: Optional[int] = None
     currency: str = "USD"
 
+    # UCP audience capabilities (added for audience validation)
+    audience_capabilities: list[str] = Field(
+        default_factory=list,
+        description="List of audience capability IDs available for this product",
+    )
+    ucp_embedding: Optional[dict[str, Any]] = Field(
+        default=None,
+        description="Pre-computed UCP embedding for this product's audience",
+    )
+
 
 class ProposalEvaluation(BaseModel):
     """Evaluation result for an incoming proposal."""
@@ -76,6 +86,28 @@ class ProposalEvaluation(BaseModel):
     # Targeting analysis
     targeting_compatible: bool = True
     targeting_notes: list[str] = Field(default_factory=list)
+
+    # Audience validation (added for UCP integration)
+    audience_validated: bool = Field(
+        default=False,
+        description="Whether audience targeting has been validated via UCP",
+    )
+    audience_coverage: float = Field(
+        default=0.0,
+        ge=0,
+        le=100,
+        description="Audience coverage percentage (0-100)",
+    )
+    audience_gaps: list[str] = Field(
+        default_factory=list,
+        description="Audience requirements that cannot be fulfilled",
+    )
+    ucp_similarity_score: Optional[float] = Field(
+        default=None,
+        ge=0,
+        le=1,
+        description="UCP embedding similarity score (0-1)",
+    )
 
     # Overall recommendation
     recommendation: str  # accept, counter, reject

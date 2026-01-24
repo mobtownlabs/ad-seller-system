@@ -56,6 +56,19 @@ from .pricing_tiers import (
     TieredPricingConfig,
     VolumeDiscount,
 )
+from .ucp import (
+    AudienceCapability,
+    AudiencePlan,
+    AudienceValidationResult,
+    CoverageEstimate,
+    EmbeddingType,
+    SignalType,
+    SimilarityMetric,
+    UCPConsent,
+    UCPContextDescriptor,
+    UCPEmbedding,
+    UCPModelDescriptor,
+)
 
 __all__ = [
     # OpenDirect 3.0 entities
@@ -110,4 +123,16 @@ __all__ = [
     "PricingRule",
     "VolumeDiscount",
     "TieredPricingConfig",
+    # UCP models
+    "AudienceCapability",
+    "AudiencePlan",
+    "AudienceValidationResult",
+    "CoverageEstimate",
+    "EmbeddingType",
+    "SignalType",
+    "SimilarityMetric",
+    "UCPConsent",
+    "UCPContextDescriptor",
+    "UCPEmbedding",
+    "UCPModelDescriptor",
 ]

@@ -18,8 +18,14 @@ from ..agents.level3 import (
     create_availability_agent,
     create_proposal_review_agent,
     create_upsell_agent,
+    create_audience_validator_agent,
 )
 from ..config import get_settings
+from ..tools.audience import (
+    AudienceValidationTool,
+    AudienceCapabilityTool,
+    CoverageCalculatorTool,
+)
 
 
 def create_display_crew() -> Crew:
@@ -297,14 +303,23 @@ def create_proposal_review_crew(proposal_data: dict) -> Crew:
         proposal_data: The proposal to review
 
     Returns:
-        Crew: Proposal review crew with all functional agents
+        Crew: Proposal review crew with all functional agents including audience validation
     """
     settings = get_settings()
 
+    # Create audience tools for the audience validator
+    audience_tools = [
+        AudienceValidationTool(),
+        AudienceCapabilityTool(),
+        CoverageCalculatorTool(),
+    ]
+
+    # Create agents
     proposal_review_agent = create_proposal_review_agent()
     pricing_agent = create_pricing_agent()
     availability_agent = create_availability_agent()
     upsell_agent = create_upsell_agent()
+    audience_validator_agent = create_audience_validator_agent(tools=audience_tools)
 
     pricing_check_task = Task(
         description=f"""Evaluate the pricing in this proposal:
@@ -334,6 +349,29 @@ Verify:
         agent=availability_agent,
     )
 
+    # New audience validation task
+    audience_validation_task = Task(
+        description=f"""Validate the audience targeting in this proposal using UCP:
+
+{proposal_data}
+
+Check:
+- Can we fulfill the requested audience targeting?
+- What is the estimated coverage percentage?
+- Are there any gaps in audience capabilities?
+- What is the UCP similarity score for this audience?
+- Suggest alternatives if we cannot fully fulfill requirements.
+
+Use the audience validation tools to compute UCP-based similarity scores.""",
+        expected_output="""Audience validation with:
+- Validation status (valid/partial_match/no_match)
+- Coverage percentage
+- UCP similarity score (0-1)
+- Gaps and alternatives if applicable
+- Targeting compatibility assessment""",
+        agent=audience_validator_agent,
+    )
+
     upsell_task = Task(
         description=f"""Identify upsell opportunities for this proposal:
 
@@ -343,34 +381,49 @@ Consider:
 - Can we expand to additional inventory types?
 - Are there volume upgrade opportunities?
 - What alternative products might interest this buyer?
-- If we reject, what alternatives can we propose?""",
+- If we reject, what alternatives can we propose?
+- Consider audience-based upsells (broader targeting for more reach).""",
         expected_output="Upsell and cross-sell recommendations",
         agent=upsell_agent,
     )
 
     final_review_task = Task(
-        description=f"""Based on pricing, availability, and upsell input,
+        description=f"""Based on pricing, availability, audience validation, and upsell input,
 provide a final recommendation for this proposal:
 
 {proposal_data}
 
 Synthesize all inputs and provide:
 - Final recommendation: Accept / Counter / Reject
-- If Counter: Specific counter-terms
+- If Counter: Specific counter-terms (including audience adjustments if needed)
 - If Reject: Clear explanation and alternatives
+- Audience coverage impact on delivery confidence
 - Upsell opportunities to pursue""",
         expected_output="""Final proposal recommendation with:
 - Decision (Accept/Counter/Reject)
-- Counter-terms if applicable
+- Counter-terms if applicable (including audience modifications)
 - Rejection reason and alternatives if applicable
+- Audience validation summary
 - Prioritized upsell opportunities""",
         agent=proposal_review_agent,
-        context=[pricing_check_task, availability_check_task, upsell_task],
+        context=[pricing_check_task, availability_check_task, audience_validation_task, upsell_task],
     )
 
     return Crew(
-        agents=[proposal_review_agent, pricing_agent, availability_agent, upsell_agent],
-        tasks=[pricing_check_task, availability_check_task, upsell_task, final_review_task],
+        agents=[
+            proposal_review_agent,
+            pricing_agent,
+            availability_agent,
+            audience_validator_agent,
+            upsell_agent,
+        ],
+        tasks=[
+            pricing_check_task,
+            availability_check_task,
+            audience_validation_task,
+            upsell_task,
+            final_review_task,
+        ],
         process=Process.sequential,
         verbose=settings.crew_verbose,
         memory=settings.crew_memory_enabled,

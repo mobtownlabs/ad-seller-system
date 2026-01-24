@@ -3,6 +3,7 @@
 This flow handles:
 - Receiving proposals from buyer agents
 - Validating against product availability
+- Validating audience targeting via UCP
 - Evaluating pricing and terms
 - Counter/accept/reject with revision tracking
 - Triggering upsell opportunities
@@ -20,6 +21,8 @@ from ..models.flow_state import (
     SellerFlowState,
 )
 from ..models.buyer_identity import BuyerContext
+from ..models.ucp import AudienceCapability, SignalType
+from ..clients.ucp_client import UCPClient
 from ..crews import create_proposal_review_crew
 from ..config import get_settings
 
@@ -60,6 +63,7 @@ class ProposalHandlingFlow(Flow[ProposalState]):
         """Initialize the proposal handling flow."""
         super().__init__()
         self._settings = get_settings()
+        self._audience_validation: dict = {}  # Populated by validate_audience step
 
     @start()
     async def receive_proposal(self) -> None:
@@ -101,6 +105,129 @@ class ProposalHandlingFlow(Flow[ProposalState]):
             )
 
     @listen(validate_product)
+    async def validate_audience(self) -> None:
+        """Validate buyer's audience targeting via UCP.
+
+        This step validates whether the proposal's audience targeting can
+        be fulfilled by the product's audience capabilities.
+        """
+        if self.state.status == ExecutionStatus.FAILED:
+            return
+
+        product_id = self.state.proposal_data.get("product_id")
+        product = self.state.products.get(product_id)
+        audience_targeting = self.state.proposal_data.get("audience_targeting", {})
+
+        if not audience_targeting:
+            # No audience targeting in proposal - skip validation
+            return
+
+        if not product:
+            return
+
+        try:
+            # Get or create product capabilities
+            capabilities = self._get_product_capabilities(product_id, product)
+
+            # Create UCP client for validation
+            ucp_client = UCPClient()
+
+            # Create product embedding from characteristics
+            product_characteristics = {
+                "product_id": product_id,
+                "inventory_type": product.inventory_type,
+                "audience_targeting": product.audience_targeting,
+                "content_targeting": product.content_targeting,
+            }
+            product_embedding = ucp_client.create_inventory_embedding(
+                product_characteristics
+            )
+
+            # Create buyer query embedding
+            buyer_embedding = ucp_client.create_embedding(
+                vector=ucp_client._generate_synthetic_embedding(
+                    audience_targeting, 512
+                ),
+                embedding_type=__import__(
+                    "ad_seller.models.ucp", fromlist=["EmbeddingType"]
+                ).EmbeddingType.QUERY,
+                signal_type=SignalType.CONTEXTUAL,
+            )
+
+            # Validate
+            validation = ucp_client.validate_buyer_audience(
+                buyer_embedding=buyer_embedding,
+                product_embedding=product_embedding,
+                capabilities=capabilities,
+                audience_requirements=audience_targeting,
+            )
+
+            # Store validation results (to be used when initializing evaluation)
+            self._audience_validation = {
+                "validated": True,
+                "coverage": validation.overall_coverage_percentage,
+                "gaps": validation.gaps,
+                "similarity_score": validation.ucp_similarity_score,
+                "targeting_compatible": validation.targeting_compatible,
+            }
+
+            if not validation.targeting_compatible:
+                self.state.warnings.append(
+                    f"Audience coverage below threshold: {validation.overall_coverage_percentage:.1f}%"
+                )
+
+        except Exception as e:
+            self.state.warnings.append(f"Audience validation warning: {e}")
+            self._audience_validation = {
+                "validated": False,
+                "coverage": 0.0,
+                "gaps": ["validation_error"],
+                "similarity_score": None,
+                "targeting_compatible": True,  # Fallback to allow
+            }
+
+    def _get_product_capabilities(
+        self,
+        product_id: str,
+        product: Any,
+    ) -> list[AudienceCapability]:
+        """Get audience capabilities for a product."""
+        # If product has pre-defined capabilities, use them
+        if hasattr(product, "audience_capabilities") and product.audience_capabilities:
+            # Would load from capability store
+            pass
+
+        # Default capabilities based on inventory type
+        capabilities = [
+            AudienceCapability(
+                capability_id=f"{product_id}_ctx",
+                name="Contextual Targeting",
+                signal_type=SignalType.CONTEXTUAL,
+                coverage_percentage=95.0,
+                ucp_compatible=True,
+                embedding_dimension=512,
+            ),
+            AudienceCapability(
+                capability_id=f"{product_id}_geo",
+                name="Geographic Targeting",
+                signal_type=SignalType.CONTEXTUAL,
+                coverage_percentage=98.0,
+                ucp_compatible=True,
+                embedding_dimension=512,
+            ),
+            AudienceCapability(
+                capability_id=f"{product_id}_demo",
+                name="Demographic Targeting",
+                signal_type=SignalType.IDENTITY,
+                coverage_percentage=70.0,
+                ucp_compatible=True,
+                embedding_dimension=512,
+            ),
+        ]
+
+        return capabilities
+
+    @listen(validate_audience)
     async def evaluate_pricing(self) -> None:
         """Evaluate the proposed pricing against our rules."""
         if self.state.status == ExecutionStatus.FAILED:
@@ -116,7 +243,10 @@ class ProposalHandlingFlow(Flow[ProposalState]):
         # Check against floor
         price_acceptable = requested_price >= product.floor_cpm
 
-        # Initialize evaluation
+        # Get audience validation results (from validate_audience step)
+        audience_validation = getattr(self, "_audience_validation", {})
+
+        # Initialize evaluation with audience fields
         self.state.evaluation = ProposalEvaluation(
             proposal_id=self.state.proposal_id,
             proposal_line_id=self.state.proposal_data.get("line_id", ""),
@@ -128,6 +258,12 @@ class ProposalHandlingFlow(Flow[ProposalState]):
             requested_impressions=self.state.proposal_data.get("impressions", 0),
             available_impressions=1000000,  # Placeholder - would come from avails
             impressions_available=True,  # Simplified
+            # Audience validation fields
+            audience_validated=audience_validation.get("validated", False),
+            audience_coverage=audience_validation.get("coverage", 0.0),
+            audience_gaps=audience_validation.get("gaps", []),
+            ucp_similarity_score=audience_validation.get("similarity_score"),
+            targeting_compatible=audience_validation.get("targeting_compatible", True),
         )
 
     @listen(evaluate_pricing)
