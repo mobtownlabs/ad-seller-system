@@ -15,7 +15,7 @@ from ad_seller.models.pricing_tiers import (
     DiscountType,
 )
 from ad_seller.models.flow_state import ProductDefinition
-from ad_seller.models.opendirect3 import (
+from ad_seller.models.core import (
     DealType,
     PricingModel,
     ProposalStatus,
@@ -222,7 +222,7 @@ class TestProductDefinition:
 
 
 class TestOpenDirect3Models:
-    """Tests for OpenDirect 3.0 models."""
+    """Tests for core ad tech models."""
 
     def test_organization_creation(self):
         """Test Organization model creation."""

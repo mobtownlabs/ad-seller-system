@@ -1,6 +1,6 @@
 """Data models for the Ad Seller System."""
 
-from .opendirect3 import (
+from .core import (
     Account,
     AccountStatus,
     ActorType,
@@ -69,9 +69,38 @@ from .ucp import (
     UCPEmbedding,
     UCPModelDescriptor,
 )
+from .gam import (
+    AudienceSegmentMapping,
+    GAMAdUnit,
+    GAMAdUnitSize,
+    GAMAdUnitTargeting,
+    GAMAudienceSegment,
+    GAMAudienceSegmentCriteria,
+    GAMAudienceSegmentStatus,
+    GAMAudienceSegmentType,
+    GAMBookingResult,
+    GAMCompany,
+    GAMCostType,
+    GAMCustomCriteriaSet,
+    GAMDateTime,
+    GAMGoal,
+    GAMGoalType,
+    GAMInventoryTargeting,
+    GAMLineItem,
+    GAMLineItemStatus,
+    GAMLineItemType,
+    GAMMoney,
+    GAMOrder,
+    GAMOrderStatus,
+    GAMPrivateAuction,
+    GAMPrivateAuctionDeal,
+    GAMSize,
+    GAMTargeting,
+    GAMUnitType,
+)
 
 __all__ = [
-    # OpenDirect 3.0 entities
+    # Core ad tech entities
     "Organization",
     "OrganizationRole",
     "Account",
@@ -135,4 +164,32 @@ __all__ = [
     "UCPContextDescriptor",
     "UCPEmbedding",
     "UCPModelDescriptor",
+    # GAM models
+    "GAMAdUnit",
+    "GAMAdUnitSize",
+    "GAMAdUnitTargeting",
+    "GAMAudienceSegment",
+    "GAMAudienceSegmentCriteria",
+    "GAMAudienceSegmentStatus",
+    "GAMAudienceSegmentType",
+    "GAMBookingResult",
+    "GAMCompany",
+    "GAMCostType",
+    "GAMCustomCriteriaSet",
+    "GAMDateTime",
+    "GAMGoal",
+    "GAMGoalType",
+    "GAMInventoryTargeting",
+    "GAMLineItem",
+    "GAMLineItemStatus",
+    "GAMLineItemType",
+    "GAMMoney",
+    "GAMOrder",
+    "GAMOrderStatus",
+    "GAMPrivateAuction",
+    "GAMPrivateAuctionDeal",
+    "GAMSize",
+    "GAMTargeting",
+    "GAMUnitType",
+    "AudienceSegmentMapping",
 ]

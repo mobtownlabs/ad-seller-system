@@ -1,20 +1,23 @@
-"""Protocol clients for OpenDirect and A2A communication."""
+"""Protocol clients for OpenDirect 2.1, A2A, and GAM communication."""
 
 from .unified_client import Protocol, UnifiedClient, UnifiedResult
 from .opendirect21_client import OpenDirect21Client
-from .opendirect30_client import OpenDirect30Client
 from .a2a_client import A2AClient, A2AResponse
 from .ucp_client import UCPClient, UCPExchangeResult
+from .gam_rest_client import GAMRestClient
+from .gam_soap_client import GAMSoapClient
 
 __all__ = [
     "Protocol",
     "UnifiedClient",
     "UnifiedResult",
     "OpenDirect21Client",
-    "OpenDirect30Client",
     "A2AClient",
     "A2AResponse",
     # UCP client for audience validation
     "UCPClient",
     "UCPExchangeResult",
+    # GAM clients
+    "GAMRestClient",
+    "GAMSoapClient",
 ]

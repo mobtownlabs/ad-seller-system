@@ -10,7 +10,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-from .opendirect3 import DealType, PricingModel, ProposalStatus
+from .core import DealType, PricingModel, ProposalStatus
 
 
 class ExecutionStatus(str, Enum):

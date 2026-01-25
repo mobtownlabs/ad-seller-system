@@ -1,7 +1,7 @@
 [project]
 name = "ad_seller_system"
 version = "0.1.0"
-description = "IAB Tech Lab OpenDirect 3.0 compliant ad seller system using CrewAI"
+description = "IAB Tech Lab OpenDirect 2.1 compliant ad seller system using CrewAI"
 authors = [
     {name = "MobtownLabs", email = "hello@mobtownlabs.com"}
 ]
@@ -37,6 +37,11 @@ dependencies = [
 redis = [
     "redis>=5.0.0",
 ]
+gam = [
+    "google-api-python-client>=2.100.0",
+    "google-auth>=2.23.0",
+    "googleads>=40.0.0",
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
@@ -45,7 +50,7 @@ dev = [
     "mypy>=1.11.0",
 ]
 all = [
-    "ad_seller_system[redis,dev]",
+    "ad_seller_system[redis,gam,dev]",
 ]
 
 [project.scripts]

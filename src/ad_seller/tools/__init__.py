@@ -8,6 +8,22 @@ from .audience import (
     AudienceCapabilityTool,
     CoverageCalculatorTool,
 )
+from .gam import (
+    # Inventory tools
+    ListAdUnitsTool,
+    GetGAMPricingTool,
+    SyncGAMInventoryTool,
+    # Booking tools (reserved deals)
+    CreateGAMOrderTool,
+    CreateGAMLineItemTool,
+    BookDealInGAMTool,
+    # Private auction tools (non-reserved deals)
+    ListPrivateAuctionsTool,
+    CreatePrivateAuctionDealTool,
+    # Audience tools
+    ListAudienceSegmentsTool,
+    SyncGAMAudiencesTool,
+)
 
 __all__ = [
     # Pricing tools
@@ -23,4 +39,18 @@ __all__ = [
     "AudienceValidationTool",
     "AudienceCapabilityTool",
     "CoverageCalculatorTool",
+    # GAM Inventory tools
+    "ListAdUnitsTool",
+    "GetGAMPricingTool",
+    "SyncGAMInventoryTool",
+    # GAM Booking tools (Programmatic Guaranteed, Preferred Deal)
+    "CreateGAMOrderTool",
+    "CreateGAMLineItemTool",
+    "BookDealInGAMTool",
+    # GAM Private Auction tools
+    "ListPrivateAuctionsTool",
+    "CreatePrivateAuctionDealTool",
+    # GAM Audience tools (with IAB Audience Taxonomy 1.1 support)
+    "ListAudienceSegmentsTool",
+    "SyncGAMAudiencesTool",
 ]

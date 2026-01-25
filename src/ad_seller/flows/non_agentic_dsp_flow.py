@@ -23,7 +23,7 @@ from ..models.flow_state import (
     SellerFlowState,
 )
 from ..models.buyer_identity import BuyerContext, BuyerIdentity, AccessTier
-from ..models.opendirect3 import DealType, PricingModel
+from ..models.core import DealType, PricingModel
 from ..config import get_settings
 
 

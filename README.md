@@ -625,7 +625,6 @@ ad_seller_system/
 │   ├── clients/           # API clients
 │   │   ├── unified_client.py     # Unified protocol access
 │   │   ├── opendirect21_client.py # OpenDirect 2.1
-│   │   ├── opendirect30_client.py # OpenDirect 3.0
 │   │   ├── a2a_client.py         # A2A natural language
 │   │   └── ucp_client.py         # UCP embedding exchange
 │   ├── crews/             # CrewAI crews

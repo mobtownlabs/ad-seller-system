@@ -10,7 +10,7 @@ from typing import Any, Optional
 
 from ..models.buyer_identity import BuyerContext, AccessTier
 from ..models.flow_state import ProposalEvaluation
-from ..models.opendirect3 import DealType
+from ..models.core import DealType
 from ..config import get_settings
 
 

@@ -17,7 +17,7 @@ from ..models.flow_state import (
     ExecutionStatus,
     SellerFlowState,
 )
-from ..models.opendirect3 import DealType, PricingModel
+from ..models.core import DealType, PricingModel
 from ..clients import UnifiedClient, Protocol
 from ..config import get_settings
 

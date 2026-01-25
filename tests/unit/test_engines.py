@@ -6,7 +6,7 @@ from ad_seller.engines.pricing_rules_engine import PricingRulesEngine
 from ad_seller.models.buyer_identity import BuyerIdentity, BuyerContext, AccessTier
 from ad_seller.models.pricing_tiers import TieredPricingConfig
 from ad_seller.models.flow_state import ProductDefinition
-from ad_seller.models.opendirect3 import DealType, PricingModel
+from ad_seller.models.core import DealType, PricingModel
 
 
 class TestPricingRulesEngine:

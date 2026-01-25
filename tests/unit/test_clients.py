@@ -12,7 +12,6 @@ class TestProtocolEnum:
     def test_protocol_values(self):
         """Test protocol enum values."""
         assert Protocol.OPENDIRECT_21.value == "opendirect21"
-        assert Protocol.OPENDIRECT_30.value == "opendirect30"
         assert Protocol.A2A.value == "a2a"
 
 
@@ -35,22 +34,6 @@ class TestUnifiedClientProtocol:
         )
         assert client.default_protocol == Protocol.OPENDIRECT_21
         assert client.base_url == "https://example.com"
-
-    @patch("ad_seller.clients.unified_client.get_settings")
-    def test_client_initialization_od30(self, mock_settings):
-        """Test client initialization with OpenDirect 3.0."""
-        mock_settings.return_value = MagicMock(
-            opendirect_base_url="https://example.com",
-            default_protocol="opendirect30",
-        )
-
-        from ad_seller.clients import UnifiedClient
-
-        client = UnifiedClient(
-            base_url="https://example.com",
-            protocol=Protocol.OPENDIRECT_30,
-        )
-        assert client.default_protocol == Protocol.OPENDIRECT_30
 
     @patch("ad_seller.clients.unified_client.get_settings")
     def test_default_protocol_from_settings(self, mock_settings):

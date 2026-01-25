@@ -1,7 +1,7 @@
-"""Unified client providing a common interface for OpenDirect protocols.
+"""Unified client providing a common interface for OpenDirect 2.1 and A2A protocols.
 
-Supports both OpenDirect 2.1 (agentic-direct) and OpenDirect 3.0 (opendirect3-mcp)
-protocols through a common interface with automatic protocol detection.
+Supports OpenDirect 2.1 (agentic-direct) and A2A for natural language interactions
+through a common interface with automatic protocol detection.
 """
 
 from enum import Enum
@@ -16,7 +16,6 @@ class Protocol(str, Enum):
     """Supported communication protocols."""
 
     OPENDIRECT_21 = "opendirect21"
-    OPENDIRECT_30 = "opendirect30"
     A2A = "a2a"
 
 
@@ -35,7 +34,6 @@ class UnifiedClient:
 
     Provides a common interface for:
     - OpenDirect 2.1 via agentic-direct MCP server
-    - OpenDirect 3.0 via opendirect3-mcp server
     - A2A for natural language interactions
 
     Usage:
@@ -67,16 +65,13 @@ class UnifiedClient:
         # Determine default protocol
         if protocol:
             self.default_protocol = protocol
-        elif settings.default_protocol == "opendirect21":
-            self.default_protocol = Protocol.OPENDIRECT_21
         elif settings.default_protocol == "a2a":
             self.default_protocol = Protocol.A2A
         else:
-            self.default_protocol = Protocol.OPENDIRECT_30
+            self.default_protocol = Protocol.OPENDIRECT_21
 
         # Protocol clients (initialized lazily)
         self._od21_client: Optional[Any] = None
-        self._od30_client: Optional[Any] = None
         self._a2a_client: Optional[Any] = None
 
     async def __aenter__(self) -> "UnifiedClient":
@@ -101,11 +96,6 @@ class UnifiedClient:
 
             self._od21_client = OpenDirect21Client(self.base_url)
             await self._od21_client.connect()
-        elif target == Protocol.OPENDIRECT_30:
-            from .opendirect30_client import OpenDirect30Client
-
-            self._od30_client = OpenDirect30Client(self.base_url)
-            await self._od30_client.connect()
         elif target == Protocol.A2A:
             from .a2a_client import A2AClient
 
@@ -115,7 +105,6 @@ class UnifiedClient:
     async def connect_all(self) -> None:
         """Connect to all available protocols."""
         await self.connect(Protocol.OPENDIRECT_21)
-        await self.connect(Protocol.OPENDIRECT_30)
         await self.connect(Protocol.A2A)
 
     async def disconnect(self) -> None:
@@ -123,9 +112,6 @@ class UnifiedClient:
         if self._od21_client:
             await self._od21_client.disconnect()
             self._od21_client = None
-        if self._od30_client:
-            await self._od30_client.disconnect()
-            self._od30_client = None
         if self._a2a_client:
             await self._a2a_client.disconnect()
             self._a2a_client = None
@@ -138,10 +124,6 @@ class UnifiedClient:
             if not self._od21_client:
                 raise RuntimeError("OpenDirect 2.1 client not connected")
             return self._od21_client
-        elif target == Protocol.OPENDIRECT_30:
-            if not self._od30_client:
-                raise RuntimeError("OpenDirect 3.0 client not connected")
-            return self._od30_client
         elif target == Protocol.A2A:
             if not self._a2a_client:
                 raise RuntimeError("A2A client not connected")

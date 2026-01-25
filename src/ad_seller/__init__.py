@@ -1,3 +1,3 @@
-"""Ad Seller System - IAB OpenDirect 3.0 compliant publisher/SSP agent system."""
+"""Ad Seller System - IAB OpenDirect 2.1 compliant publisher/SSP agent system."""
 
 __version__ = "0.1.0"

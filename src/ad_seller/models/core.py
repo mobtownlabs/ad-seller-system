@@ -1,12 +1,12 @@
-"""OpenDirect 3.0 data models based on IAB Tech Lab specification.
+"""Core data models for programmatic advertising.
 
-These models implement the OpenDirect 3.0 specification for programmatic direct
-advertising. The spec emphasizes:
-- Audience-first, not placement-first approach
-- Three orthogonal IAB taxonomies (Audience, Content, Ad Product)
-- Creative metadata only (no executable markup)
-- Clear separation of negotiation, execution, and delivery
-- RFC 6902 JSON Patch for proposal revisions
+These models represent common ad tech entities used across OpenDirect and
+other programmatic advertising protocols. They provide a shared vocabulary for:
+- Deal types and pricing models
+- Organizations and accounts
+- Products and inventory
+- Orders and line items
+- Creatives and assignments
 """
 
 from datetime import datetime
@@ -445,7 +445,7 @@ class ContentPolicy(BaseModel):
 class Creative(BaseModel):
     """Creative metadata for advertising assets.
 
-    OpenDirect 3.0 creatives contain metadata only, not executable
+    Creatives contain metadata only, not executable
     markup. This enables platform-agnostic creative management.
     """
 

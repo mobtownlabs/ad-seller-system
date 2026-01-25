@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 app = FastAPI(
     title="Ad Seller System API",
-    description="IAB OpenDirect 3.0 compliant seller API",
+    description="IAB OpenDirect 2.1 compliant seller API",
     version="0.1.0",
 )
 

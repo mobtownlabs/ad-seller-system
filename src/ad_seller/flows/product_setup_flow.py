@@ -18,7 +18,7 @@ from ..models.flow_state import (
     ProductDefinition,
     SellerFlowState,
 )
-from ..models.opendirect3 import DealType, PricingModel
+from ..models.core import DealType, PricingModel
 from ..clients import UnifiedClient, Protocol
 from ..config import get_settings
 
@@ -101,12 +101,8 @@ class ProductSetupFlow(Flow[ProductSetupState]):
             self.state.warnings.append("No ad server configured, skipping inventory sync")
             return
 
-        # For OpenDirect 3.0 (experimental), sync from ad server
-        if self._settings.default_protocol == "opendirect30":
-            async with UnifiedClient(protocol=Protocol.OPENDIRECT_30) as client:
-                # This would sync inventory segments from GAM/FreeWheel
-                # For now, we'll create placeholder segments
-                pass
+        # TODO: Implement GAM inventory sync when GAM client is available
+        pass
 
     @listen(sync_from_ad_server)
     async def create_default_products(self) -> None:

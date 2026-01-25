@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     opendirect_api_key: Optional[str] = None
     opendirect_token: Optional[str] = None
 
-    # Protocol Selection (OpenDirect 2.1 is primary/production, 3.0 is experimental)
-    default_protocol: str = "opendirect21"  # opendirect21 (primary), opendirect30 (experimental), a2a
+    # Protocol Selection
+    default_protocol: str = "opendirect21"  # opendirect21, a2a
 
     # LLM Configuration
     default_llm_model: str = "anthropic/claude-sonnet-4-5-20250929"
@@ -49,8 +49,16 @@ class Settings(BaseSettings):
 
     # Ad Server Configuration
     ad_server_type: str = "google_ad_manager"  # google_ad_manager, freewheel
-    gam_network_code: Optional[str] = None
-    gam_json_key_path: Optional[str] = None
+
+    # Google Ad Manager (GAM) Configuration
+    gam_enabled: bool = False  # Feature flag to enable GAM integration
+    gam_network_code: Optional[str] = None  # GAM network ID
+    gam_json_key_path: Optional[str] = None  # Path to service account JSON key
+    gam_application_name: str = "AdSellerSystem"  # Application name for GAM API
+    gam_api_version: str = "v202411"  # SOAP API version
+    gam_default_trafficker_id: Optional[str] = None  # Default trafficker user ID
+
+    # FreeWheel Configuration (alternative ad server)
     freewheel_api_url: Optional[str] = None
     freewheel_api_key: Optional[str] = None
 

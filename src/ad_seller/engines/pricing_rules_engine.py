@@ -18,7 +18,7 @@ from ..models.pricing_tiers import (
     DiscountType,
 )
 from ..models.flow_state import PricingDecision
-from ..models.opendirect3 import DealType, PricingModel
+from ..models.core import DealType, PricingModel
 
 
 class PricingRulesEngine:
