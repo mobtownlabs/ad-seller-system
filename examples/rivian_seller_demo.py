@@ -233,7 +233,7 @@ async def simulate_buyer_discovery_request(
         request_data = {
             "type": "discovery",
             "buyer": {
-                "agency": "Horizon Media",
+                "agency": "Agency ABC",
                 "advertiser": "Rivian Automotive",
                 "tier": "advertiser",
             },
@@ -283,8 +283,8 @@ async def simulate_pricing_request(
     print_event("INCOMING", "Pricing request received with buyer identity")
 
     buyer_info = {
-        "agency_id": "horizon-media-001",
-        "agency_name": "Horizon Media",
+        "agency_id": "agency-abc-001",
+        "agency_name": "Agency ABC",
         "advertiser_id": "rivian-automotive-001",
         "advertiser_name": "Rivian Automotive",
         "tier": "advertiser",
