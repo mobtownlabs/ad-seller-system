@@ -32,6 +32,11 @@ from typing import Any, Optional
 # Add parent directory to path for ad_seller imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+# Load .env from project root (so script works from any directory)
+from dotenv import load_dotenv
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
+
 # Rich console for beautiful output
 try:
     from rich.console import Console

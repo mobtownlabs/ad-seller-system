@@ -63,6 +63,7 @@ The Ad Seller System lets you:
 │  │ Inventory: AvailsChecker, CapacityForecaster, AllocationManager        │ │
 │  │ Deals: ProposalGenerator, CounterOfferBuilder, DealIDGenerator         │ │
 │  │ Audience: AudienceValidation, AudienceCapability, CoverageCalculator   │ │
+│  │ GAM: ListAdUnits, CreateOrder, CreateLineItem, BookDeal, SyncInventory │ │
 │  └────────────────────────────────────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  INTERFACES: CLI │ REST API │ Chat                                          │
@@ -586,17 +587,22 @@ UCP_SIMILARITY_THRESHOLD=0.5
 UCP_CONSENT_REQUIRED=true
 
 # ─────────────────────────────────────────────────────────────────
-# AD SERVER INTEGRATION (optional)
+# GOOGLE AD MANAGER INTEGRATION
 # ─────────────────────────────────────────────────────────────────
-# Google Ad Manager
-# AD_SERVER_TYPE=google_ad_manager
-# GAM_NETWORK_CODE=12345678
-# GAM_JSON_KEY_PATH=/path/to/service-account.json
+# Enable GAM integration
+GAM_ENABLED=false
 
-# FreeWheel
-# AD_SERVER_TYPE=freewheel
-# FREEWHEEL_API_URL=https://api.freewheel.com
-# FREEWHEEL_API_KEY=your-key
+# Your GAM network code (found in GAM Admin → Global Settings)
+GAM_NETWORK_CODE=12345678
+
+# Path to service account JSON key file
+GAM_JSON_KEY_PATH=/path/to/service-account.json
+
+# Application name (for API identification)
+GAM_APPLICATION_NAME=AdSellerSystem
+
+# SOAP API version
+GAM_API_VERSION=v202411
 
 # ─────────────────────────────────────────────────────────────────
 # LLM CONFIGURATION
@@ -616,7 +622,10 @@ ad_seller_system/
 │   ├── tiered_pricing.py
 │   ├── opendirect_connection.py
 │   ├── storage_demo.py
-│   └── audience_validation.py
+│   ├── audience_validation.py
+│   ├── publisher_gam_server.py   # Live GAM integration demo
+│   ├── buyer_demo.py             # Buyer simulation for demos
+│   └── dsp_amazon_server.py      # DSP server simulation
 ├── src/ad_seller/
 │   ├── agents/            # CrewAI agents
 │   │   ├── level1/        # Inventory Manager
@@ -626,7 +635,9 @@ ad_seller_system/
 │   │   ├── unified_client.py     # Unified protocol access
 │   │   ├── opendirect21_client.py # OpenDirect 2.1
 │   │   ├── a2a_client.py         # A2A natural language
-│   │   └── ucp_client.py         # UCP embedding exchange
+│   │   ├── ucp_client.py         # UCP embedding exchange
+│   │   ├── gam_soap_client.py    # GAM SOAP API (write operations)
+│   │   └── gam_rest_client.py    # GAM REST API (read operations)
 │   ├── crews/             # CrewAI crews
 │   │   └── inventory_crews.py    # Channel-specific crews
 │   ├── engines/           # Business logic engines
@@ -641,7 +652,8 @@ ad_seller_system/
 │   │   ├── flow_state.py        # Flow state models
 │   │   ├── buyer_identity.py    # Buyer identity models
 │   │   ├── pricing_tiers.py     # Tiered pricing models
-│   │   └── ucp.py               # UCP models (embeddings, capabilities)
+│   │   ├── ucp.py               # UCP models (embeddings, capabilities)
+│   │   └── gam.py               # GAM models (orders, line items, targeting)
 │   ├── storage/           # Storage backends
 │   │   ├── sqlite_backend.py
 │   │   └── redis_backend.py
@@ -649,7 +661,8 @@ ad_seller_system/
 │       ├── pricing/       # Pricing tools
 │       ├── inventory/     # Inventory tools
 │       ├── deals/         # Deal tools
-│       └── audience/      # Audience tools (validation, capability, coverage)
+│       ├── audience/      # Audience tools (validation, capability, coverage)
+│       └── gam/           # GAM tools (orders, line items, sync)
 ├── tests/
 │   └── unit/              # Unit tests
 └── scripts/               # Test and utility scripts
@@ -710,6 +723,197 @@ If using Redis, ensure it's running:
 redis-cli ping
 # Should return: PONG
 ```
+
+### GAM authentication errors
+
+Verify your service account is properly configured:
+```bash
+# Check if credentials file exists
+cat $GAM_JSON_KEY_PATH | jq '.client_email'
+
+# Ensure the service account email is added to GAM:
+# GAM Admin → Global Settings → Network Settings → API Access
+```
+
+### GAM "INVALID_SUPPLY_PATH_FOR_PROGRAMMATIC_ORDER" error
+
+This occurs when `isProgrammatic=True` but Programmatic Direct is not enabled:
+- Set `is_programmatic=False` when creating orders, or
+- Enable Programmatic Direct in GAM Admin
+
+### GAM line items not being created
+
+Check that:
+1. The order was successfully created first
+2. Ad unit IDs exist in your GAM network
+3. Start/end dates are in the future
+4. The trafficker ID has appropriate permissions
+
+---
+
+## Google Ad Manager Integration
+
+The Ad Seller System integrates with **Google Ad Manager (GAM)** to enable real booking of programmatic deals directly in your ad server.
+
+### Hybrid API Approach
+
+GAM integration uses a hybrid approach combining two APIs:
+
+| API | Use Case | Operations |
+|-----|----------|------------|
+| **REST API** | Reading data | List ad units, get orders, run reports, manage private auctions |
+| **SOAP API** | Writing data | Create orders, create line items, approve orders, manage audiences |
+
+### Deal Type → GAM Mapping
+
+| OpenDirect Deal Type | GAM Entity | GAM Line Item Type |
+|---------------------|------------|-------------------|
+| **Programmatic Guaranteed** | Order + LineItem | `SPONSORSHIP` or `STANDARD` |
+| **Preferred Deal** | Order + LineItem | `PREFERRED_DEAL` |
+| **Private Auction** | PrivateAuction + PrivateAuctionDeal | N/A (separate API) |
+
+### GAM Configuration
+
+Add these settings to your `.env` file:
+
+```bash
+# Enable GAM integration
+GAM_ENABLED=true
+
+# Your GAM network code (found in GAM Admin)
+GAM_NETWORK_CODE=12345678
+
+# Path to service account JSON key file
+GAM_JSON_KEY_PATH=/path/to/service-account.json
+
+# Application name (for API identification)
+GAM_APPLICATION_NAME=AdSellerSystem
+
+# SOAP API version
+GAM_API_VERSION=v202411
+```
+
+### Setting Up GAM Authentication
+
+1. **Create a Google Cloud Project** with Ad Manager API enabled
+2. **Create a Service Account** and download the JSON key file
+3. **Link Service Account to GAM Network**:
+   - Go to GAM Admin → Global Settings → Network Settings → API Access
+   - Add the service account email as a user with appropriate permissions
+4. **Configure environment** with the settings above
+
+### Using the GAM Clients
+
+```python
+from ad_seller.clients import GAMSoapClient, GAMRestClient
+from ad_seller.config import get_settings
+
+settings = get_settings()
+
+# SOAP client for creating orders and line items
+soap_client = GAMSoapClient(
+    network_code=settings.gam_network_code,
+    credentials_path=settings.gam_json_key_path,
+)
+soap_client.connect()
+
+# Get current user ID (for trafficker_id)
+current_user = soap_client.get_current_user()
+trafficker_id = current_user["id"]
+
+# Create an order
+order = soap_client.create_order(
+    name="Q1 2026 - Coca-Cola Campaign",
+    advertiser_id="123456789",  # GAM company ID
+    trafficker_id=trafficker_id,
+    notes="OpenDirect Deal: OD-DEAL-001",
+)
+print(f"Created order: {order.id}")
+
+# Create a line item
+from datetime import datetime, timedelta
+from ad_seller.models.gam import (
+    GAMLineItemType, GAMGoal, GAMGoalType, GAMUnitType,
+    GAMMoney, GAMTargeting, GAMInventoryTargeting, GAMAdUnitTargeting,
+)
+
+line_item = soap_client.create_line_item(
+    order_id=order.id,
+    name="CTV Premium - 5M Impressions",
+    line_item_type=GAMLineItemType.STANDARD,
+    targeting=GAMTargeting(
+        inventory_targeting=GAMInventoryTargeting(
+            targeted_ad_units=[
+                GAMAdUnitTargeting(ad_unit_id="987654321", include_descendants=True)
+            ]
+        )
+    ),
+    cost_type="CPM",
+    cost_per_unit=GAMMoney.from_dollars(28.50),
+    primary_goal=GAMGoal(
+        goal_type=GAMGoalType.LIFETIME,
+        unit_type=GAMUnitType.IMPRESSIONS,
+        units=5_000_000,
+    ),
+    start_time=datetime.now(),
+    end_time=datetime.now() + timedelta(days=90),
+)
+print(f"Created line item: {line_item.id}")
+
+# Approve the order
+approved_order = soap_client.approve_order(order.id)
+print(f"Order status: {approved_order.status}")
+```
+
+### REST Client for Reading
+
+```python
+# REST client for reading inventory
+rest_client = GAMRestClient(
+    network_code=settings.gam_network_code,
+    credentials_path=settings.gam_json_key_path,
+)
+await rest_client.connect()
+
+# List ad units
+ad_units = await rest_client.list_ad_units()
+for unit in ad_units[:5]:
+    print(f"- {unit.name} ({unit.id})")
+
+# List private auctions
+auctions = await rest_client.list_private_auctions()
+```
+
+### GAM Tools (CrewAI)
+
+| Tool | Description |
+|------|-------------|
+| `ListAdUnitsTool` | List available ad units from GAM |
+| `GetGAMPricingTool` | Get pricing information for an ad unit |
+| `SyncGAMInventoryTool` | Sync GAM inventory to local product catalog |
+| `CreateGAMOrderTool` | Create a new order in GAM |
+| `CreateGAMLineItemTool` | Create a line item in an order |
+| `BookDealInGAMTool` | Orchestrate full deal booking (order + line item) |
+| `ListPrivateAuctionsTool` | List private auctions |
+| `CreatePrivateAuctionDealTool` | Create a private auction deal |
+| `ListAudienceSegmentsTool` | List available audience segments |
+| `SyncGAMAudiencesTool` | Sync audience segments with UCP |
+
+### Running the Demo with Live GAM
+
+The `examples/publisher_gam_server.py` demo connects to real GAM:
+
+```bash
+# Set up your .env with GAM credentials
+cd ad_seller_system
+python examples/publisher_gam_server.py
+```
+
+When a PG deal is accepted, the demo:
+1. Creates a real GAM Order with the advertiser
+2. Creates a real GAM Line Item with targeting and pricing
+3. Approves the order for delivery
+4. Returns the GAM order and line item IDs
 
 ---
 
