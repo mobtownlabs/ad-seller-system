@@ -155,17 +155,20 @@ class TestGAMSoapClient:
             credentials_path="/path/to/creds.json",
         )
 
-        soap_data = {
-            "id": 999,
-            "name": "Q1 Campaign",
-            "advertiserId": 111,
-            "traffickerId": 222,
-            "agencyId": 333,
-            "status": "APPROVED",
-            "externalOrderId": "OD-DEAL-123",
-            "notes": "Test order",
-            "isProgrammatic": True,
-        }
+        # Create a mock ZEEP-like object with attributes (SOAP returns objects, not dicts)
+        class MockOrder:
+            def __init__(self):
+                self.id = 999
+                self.name = "Q1 Campaign"
+                self.advertiserId = 111
+                self.traffickerId = 222
+                self.agencyId = 333
+                self.status = "APPROVED"
+                self.externalOrderId = "OD-DEAL-123"
+                self.notes = "Test order"
+                self.isProgrammatic = True
+
+        soap_data = MockOrder()
 
         order = client._parse_order(soap_data)
         assert order.id == "999"
@@ -184,24 +187,32 @@ class TestGAMSoapClient:
             credentials_path="/path/to/creds.json",
         )
 
-        soap_data = {
-            "id": 888,
-            "orderId": 999,
-            "name": "Display Line",
-            "lineItemType": "STANDARD",
-            "status": "READY",
-            "costType": "CPM",
-            "costPerUnit": {
-                "currencyCode": "USD",
-                "microAmount": 15000000,
-            },
-            "primaryGoal": {
-                "goalType": "LIFETIME",
-                "unitType": "IMPRESSIONS",
-                "units": 1000000,
-            },
-            "externalId": "OD-LINE-456",
-        }
+        # Create mock ZEEP-like objects with attributes (SOAP returns objects, not dicts)
+        class MockCostPerUnit:
+            def __init__(self):
+                self.currencyCode = "USD"
+                self.microAmount = 15000000
+
+        class MockPrimaryGoal:
+            def __init__(self):
+                self.goalType = "LIFETIME"
+                self.unitType = "IMPRESSIONS"
+                self.units = 1000000
+
+        class MockLineItem:
+            def __init__(self):
+                self.id = 888
+                self.orderId = 999
+                self.name = "Display Line"
+                self.lineItemType = "STANDARD"
+                self.status = "READY"
+                self.costType = "CPM"
+                self.costPerUnit = MockCostPerUnit()
+                self.primaryGoal = MockPrimaryGoal()
+                self.externalId = "OD-LINE-456"
+                self.notes = None
+
+        soap_data = MockLineItem()
 
         line_item = client._parse_line_item(soap_data)
         assert line_item.id == "888"

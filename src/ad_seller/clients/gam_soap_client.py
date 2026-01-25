@@ -9,6 +9,8 @@ from typing import Any, Optional
 
 from ..config import get_settings
 from ..models.gam import (
+    GAMAdUnit,
+    GAMAdUnitSize,
     GAMAudienceSegment,
     GAMAudienceSegmentStatus,
     GAMAudienceSegmentType,
@@ -22,6 +24,7 @@ from ..models.gam import (
     GAMMoney,
     GAMOrder,
     GAMOrderStatus,
+    GAMSize,
     GAMTargeting,
     GAMUnitType,
     GAMCostType,
@@ -179,7 +182,7 @@ class GAMSoapClient:
         agency_id: Optional[str] = None,
         notes: Optional[str] = None,
         external_order_id: Optional[str] = None,
-        is_programmatic: bool = True,
+        is_programmatic: bool = False,  # Default False to avoid INVALID_SUPPLY_PATH_FOR_PROGRAMMATIC_ORDER
     ) -> GAMOrder:
         """Create a new order in GAM.
 
@@ -208,8 +211,11 @@ class GAMSoapClient:
             "name": name,
             "advertiserId": int(advertiser_id),
             "traffickerId": int(trafficker),
-            "isProgrammatic": is_programmatic,
         }
+
+        # Only set isProgrammatic if explicitly True (avoid INVALID_SUPPLY_PATH error)
+        if is_programmatic:
+            order["isProgrammatic"] = True
 
         if agency_id:
             order["agencyId"] = int(agency_id)
@@ -221,17 +227,8 @@ class GAMSoapClient:
         result = order_service.createOrders([order])
         order_data = result[0]
 
-        return GAMOrder(
-            id=str(order_data["id"]),
-            name=order_data["name"],
-            advertiser_id=str(order_data["advertiserId"]),
-            trafficker_id=str(order_data["traffickerId"]),
-            agency_id=str(order_data["agencyId"]) if order_data.get("agencyId") else None,
-            status=GAMOrderStatus(order_data.get("status", "DRAFT")),
-            external_order_id=order_data.get("externalOrderId"),
-            notes=order_data.get("notes"),
-            is_programmatic=order_data.get("isProgrammatic", False),
-        )
+        # Use the shared _parse_order method
+        return self._parse_order(order_data)
 
     def approve_order(self, order_id: str) -> GAMOrder:
         """Approve an order (submit for delivery).
@@ -254,22 +251,30 @@ class GAMSoapClient:
 
         # Fetch updated order
         response = order_service.getOrdersByStatement({"query": statement})
-        order_data = response["results"][0]
+        # ZEEP returns objects - use getattr
+        results = getattr(response, "results", None) or []
+        order_data = results[0] if results else None
 
         return self._parse_order(order_data)
 
-    def _parse_order(self, data: dict[str, Any]) -> GAMOrder:
-        """Parse SOAP response into GAMOrder model."""
+    def _parse_order(self, data: Any) -> GAMOrder:
+        """Parse SOAP response (ZEEP object) into GAMOrder model."""
+        # ZEEP returns objects - use getattr instead of dict access
+        # For optional fields, carefully check for None/0/"" to avoid validation errors
+        external_order_id = getattr(data, "externalOrderId", None)
+        notes = getattr(data, "notes", None)
+        agency_id = getattr(data, "agencyId", None)
+
         return GAMOrder(
-            id=str(data["id"]),
-            name=data["name"],
-            advertiser_id=str(data["advertiserId"]),
-            trafficker_id=str(data["traffickerId"]),
-            agency_id=str(data["agencyId"]) if data.get("agencyId") else None,
-            status=GAMOrderStatus(data.get("status", "DRAFT")),
-            external_order_id=data.get("externalOrderId"),
-            notes=data.get("notes"),
-            is_programmatic=data.get("isProgrammatic", False),
+            id=str(getattr(data, "id", 0)),
+            name=getattr(data, "name", ""),
+            advertiser_id=str(getattr(data, "advertiserId", 0)),
+            trafficker_id=str(getattr(data, "traffickerId", 0)),
+            agency_id=str(agency_id) if agency_id and agency_id != 0 else None,
+            status=GAMOrderStatus(getattr(data, "status", "DRAFT")),
+            external_order_id=str(external_order_id) if external_order_id and external_order_id not in (0, "") else None,
+            notes=str(notes) if notes and notes not in (0, "") else None,
+            is_programmatic=getattr(data, "isProgrammatic", False),
         )
 
     # =========================================================================
@@ -392,37 +397,41 @@ class GAMSoapClient:
         # Fetch current line item
         statement = f"WHERE id = {line_item_id}"
         response = line_item_service.getLineItemsByStatement({"query": statement})
-        line_item = response["results"][0]
+        # ZEEP returns objects - use getattr
+        results = getattr(response, "results", None) or []
+        line_item = results[0] if results else {}
 
-        # Apply updates
+        # Apply updates (ZEEP objects support setattr)
         for key, value in updates.items():
-            line_item[key] = value
+            setattr(line_item, key, value)
 
         result = line_item_service.updateLineItems([line_item])
         return self._parse_line_item(result[0])
 
-    def _parse_line_item(self, data: dict[str, Any]) -> GAMLineItem:
-        """Parse SOAP response into GAMLineItem model."""
-        cost_data = data.get("costPerUnit", {})
+    def _parse_line_item(self, data: Any) -> GAMLineItem:
+        """Parse SOAP response (ZEEP object) into GAMLineItem model."""
+        # ZEEP returns objects - use getattr instead of dict access
+        cost_data = getattr(data, "costPerUnit", None)
+        primary_goal = getattr(data, "primaryGoal", None)
 
         return GAMLineItem(
-            id=str(data["id"]),
-            order_id=str(data["orderId"]),
-            name=data["name"],
-            line_item_type=GAMLineItemType(data.get("lineItemType", "STANDARD")),
-            status=GAMLineItemStatus(data.get("status", "DRAFT")),
-            cost_type=GAMCostType(data.get("costType", "CPM")),
+            id=str(getattr(data, "id", 0)),
+            order_id=str(getattr(data, "orderId", 0)),
+            name=getattr(data, "name", ""),
+            line_item_type=GAMLineItemType(getattr(data, "lineItemType", "STANDARD")),
+            status=GAMLineItemStatus(getattr(data, "status", "DRAFT")),
+            cost_type=GAMCostType(getattr(data, "costType", "CPM")),
             cost_per_unit=GAMMoney(
-                currency_code=cost_data.get("currencyCode", "USD"),
-                micro_amount=cost_data.get("microAmount", 0),
+                currency_code=getattr(cost_data, "currencyCode", "USD") if cost_data else "USD",
+                micro_amount=getattr(cost_data, "microAmount", 0) if cost_data else 0,
             ),
             primary_goal=GAMGoal(
-                goal_type=GAMGoalType(data["primaryGoal"].get("goalType", "LIFETIME")),
-                unit_type=GAMUnitType(data["primaryGoal"].get("unitType", "IMPRESSIONS")),
-                units=data["primaryGoal"].get("units", -1),
+                goal_type=GAMGoalType(getattr(primary_goal, "goalType", "LIFETIME") if primary_goal else "LIFETIME"),
+                unit_type=GAMUnitType(getattr(primary_goal, "unitType", "IMPRESSIONS") if primary_goal else "IMPRESSIONS"),
+                units=getattr(primary_goal, "units", -1) if primary_goal else -1,
             ),
-            external_id=data.get("externalId"),
-            notes=data.get("notes"),
+            external_id=getattr(data, "externalId", None),
+            notes=getattr(data, "notes", None),
         )
 
     def _to_soap_datetime(self, dt: datetime) -> dict[str, Any]:
@@ -569,6 +578,65 @@ class GAMSoapClient:
             size=getattr(data, "size", None),
             membership_expiration_days=getattr(data, "membershipExpirationDays", 30),
         )
+
+    # =========================================================================
+    # Ad Unit Operations
+    # =========================================================================
+
+    def list_ad_units(
+        self,
+        filter_statement: Optional[str] = None,
+        limit: int = 100,
+    ) -> list[GAMAdUnit]:
+        """List ad units in the network.
+
+        Args:
+            filter_statement: Optional PQL filter
+            limit: Maximum results to return
+
+        Returns:
+            List of ad units
+        """
+        inventory_service = self._get_service("InventoryService")
+
+        statement = filter_statement or ""
+        if statement and not statement.upper().startswith("WHERE"):
+            statement = f"WHERE {statement}"
+        statement += f" LIMIT {limit}"
+
+        response = inventory_service.getAdUnitsByStatement({"query": statement})
+
+        ad_units = []
+        results = getattr(response, "results", None) or []
+        for data in results:
+            # Parse sizes if present
+            sizes = []
+            ad_unit_sizes = getattr(data, "adUnitSizes", None) or []
+            for size_data in ad_unit_sizes:
+                size = getattr(size_data, "size", None)
+                if size:
+                    sizes.append(
+                        GAMAdUnitSize(
+                            size=GAMSize(
+                                width=getattr(size, "width", 0),
+                                height=getattr(size, "height", 0),
+                                is_aspect_ratio=getattr(size, "isAspectRatio", False),
+                            ),
+                            environment_type=getattr(size_data, "environmentType", "BROWSER"),
+                        )
+                    )
+
+            ad_unit = GAMAdUnit(
+                id=str(getattr(data, "id", "")),
+                name=getattr(data, "name", ""),
+                parent_id=str(getattr(data, "parentId", "")) if getattr(data, "parentId", None) else None,
+                ad_unit_code=getattr(data, "adUnitCode", None),
+                status=getattr(data, "status", "ACTIVE"),
+                ad_unit_sizes=sizes,
+            )
+            ad_units.append(ad_unit)
+
+        return ad_units
 
     # =========================================================================
     # Utility Methods

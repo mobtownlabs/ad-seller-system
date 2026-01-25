@@ -16,15 +16,21 @@ Usage:
     python publisher_gam_server.py
 
 Runs on port 8001
+
+LIVE GAM INTEGRATION: This server connects to real Google Ad Manager!
 """
 
 import asyncio
 import json
+import os
 import sys
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
+
+# Add parent directory to path for ad_seller imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # Rich console for beautiful output
 try:
@@ -46,6 +52,27 @@ except ImportError:
     print("Error: Please install FastAPI: pip install fastapi uvicorn")
     sys.exit(1)
 
+# Import real GAM clients
+try:
+    from ad_seller.clients import GAMSoapClient, GAMRestClient
+    from ad_seller.models.gam import (
+        GAMLineItemType,
+        GAMGoal,
+        GAMGoalType,
+        GAMUnitType,
+        GAMMoney,
+        GAMCostType,
+        GAMTargeting,
+        GAMInventoryTargeting,
+        GAMAdUnitTargeting,
+    )
+    from ad_seller.config import get_settings
+    GAM_AVAILABLE = True
+except ImportError as e:
+    GAM_AVAILABLE = False
+    print(f"Warning: GAM integration not available: {e}")
+    print("Running in simulation mode.")
+
 console = Console() if RICH_AVAILABLE else None
 
 # =============================================================================
@@ -57,8 +84,15 @@ class PublisherInventory:
 
     def __init__(self):
         self.publisher_name = "Premium Streaming Network"
-        self.gam_network_code = "12345678"
 
+        # Get real GAM network code from settings
+        if GAM_AVAILABLE:
+            settings = get_settings()
+            self.gam_network_code = settings.gam_network_code or "3790"
+        else:
+            self.gam_network_code = "3790"
+
+        # Products reference real GAM ad unit IDs (created during startup)
         self.products = [
             {
                 "id": "ctv-hbo-max-001",
@@ -72,7 +106,8 @@ class PublisherInventory:
                 "targeting_options": ["household", "demographic", "behavioral", "contextual"],
                 "ad_formats": ["15s", "30s", "60s"],
                 "supported_deal_types": ["programmatic_guaranteed", "private_marketplace"],
-                "gam_ad_unit_id": "/12345678/hbo_max_ctv",
+                "gam_ad_unit_id": None,  # Set during GAM initialization
+                "gam_ad_unit_name": "HBO Max CTV",
             },
             {
                 "id": "ctv-peacock-001",
@@ -86,7 +121,8 @@ class PublisherInventory:
                 "targeting_options": ["household", "demographic", "behavioral"],
                 "ad_formats": ["15s", "30s"],
                 "supported_deal_types": ["programmatic_guaranteed", "private_marketplace"],
-                "gam_ad_unit_id": "/12345678/peacock_ctv",
+                "gam_ad_unit_id": None,
+                "gam_ad_unit_name": "Peacock CTV",
             },
             {
                 "id": "ctv-paramount-001",
@@ -100,7 +136,8 @@ class PublisherInventory:
                 "targeting_options": ["household", "demographic"],
                 "ad_formats": ["15s", "30s"],
                 "supported_deal_types": ["programmatic_guaranteed", "private_marketplace"],
-                "gam_ad_unit_id": "/12345678/paramount_ctv",
+                "gam_ad_unit_id": None,
+                "gam_ad_unit_name": "Paramount Plus CTV",
             },
             {
                 "id": "ctv-hulu-001",
@@ -114,7 +151,8 @@ class PublisherInventory:
                 "targeting_options": ["household", "demographic", "behavioral"],
                 "ad_formats": ["15s", "30s", "60s"],
                 "supported_deal_types": ["programmatic_guaranteed", "private_marketplace"],
-                "gam_ad_unit_id": "/12345678/hulu_ctv",
+                "gam_ad_unit_id": None,
+                "gam_ad_unit_name": "Hulu CTV",
             },
         ]
 
@@ -122,6 +160,13 @@ class PublisherInventory:
         self.gam_orders = {}  # PG bookings in GAM
         self.pmp_deals = {}   # PMP deals with Deal IDs
         self.request_log = []
+
+        # GAM integration state
+        self.gam_connected = False
+        self.gam_soap_client = None
+        self.gam_rest_client = None
+        self.default_trafficker_id = None
+        self.private_auction_id = None  # For PMP deals
 
 
 class TieredPricingEngine:
@@ -190,88 +235,255 @@ inventory = PublisherInventory()
 pricing_engine = TieredPricingEngine()
 
 # =============================================================================
-# GAM Integration (Simulated)
+# GAM Integration (REAL - Live GAM Connection)
 # =============================================================================
 
-class GAMClient:
-    """Simulated Google Ad Manager client for booking PG lines."""
+def initialize_gam_connection():
+    """Initialize connection to Google Ad Manager and set up demo inventory."""
+    global inventory
 
-    def __init__(self, network_code: str):
-        self.network_code = network_code
-        self.orders = {}
-        self.line_items = {}
+    if not GAM_AVAILABLE:
+        log_event("GAM", "GAM integration not available - running in simulation mode")
+        return False
 
-    def create_order(
-        self,
-        order_name: str,
-        advertiser_name: str,
-        agency_name: str,
-        trafficker_email: str = "trafficker@publisher.com"
-    ) -> dict:
-        """Create an order in GAM."""
-        order_id = f"GAM-ORD-{uuid.uuid4().hex[:8].upper()}"
+    settings = get_settings()
 
-        order = {
+    if not settings.gam_enabled:
+        log_event("GAM", "GAM integration disabled in settings")
+        return False
+
+    if not settings.gam_network_code or not settings.gam_json_key_path:
+        log_event("GAM", "GAM credentials not configured")
+        return False
+
+    try:
+        # Initialize SOAP client for creating orders/line items
+        log_event("GAM", "Connecting to Google Ad Manager SOAP API...")
+        soap_client = GAMSoapClient(
+            network_code=settings.gam_network_code,
+            credentials_path=settings.gam_json_key_path,
+        )
+        soap_client.connect()
+        inventory.gam_soap_client = soap_client
+        log_event("GAM", f"✓ Connected to GAM network {settings.gam_network_code}")
+
+        # Get current user as default trafficker
+        try:
+            current_user = soap_client.get_current_user()
+            # ZEEP returns objects, use getattr
+            inventory.default_trafficker_id = str(getattr(current_user, "id", 0))
+            user_name = getattr(current_user, "name", "Unknown")
+            log_event("GAM", f"✓ Default trafficker: {user_name} (ID: {inventory.default_trafficker_id})")
+        except Exception as e:
+            log_event("GAM", f"Warning: Could not get current user: {e}")
+            inventory.default_trafficker_id = "0"
+
+        # List existing ad units and map to products
+        log_event("GAM", "Fetching existing ad units...")
+        ad_units = soap_client.list_ad_units(limit=100)
+        ad_unit_map = {au.name.lower(): au for au in ad_units}
+        log_event("GAM", f"✓ Found {len(ad_units)} ad units in GAM")
+
+        # Map products to existing ad units or use first available
+        for product in inventory.products:
+            product_name_key = product["gam_ad_unit_name"].lower()
+
+            # Try to find matching ad unit
+            matched = False
+            for au_name, au in ad_unit_map.items():
+                if product_name_key in au_name or au_name in product_name_key:
+                    product["gam_ad_unit_id"] = au.id
+                    log_event("GAM", f"  Mapped {product['id']} → Ad Unit {au.id} ({au.name})")
+                    matched = True
+                    break
+
+            if not matched and ad_units:
+                # Use first available ad unit for demo
+                product["gam_ad_unit_id"] = ad_units[0].id
+                log_event("GAM", f"  Mapped {product['id']} → Ad Unit {ad_units[0].id} (default)")
+
+        inventory.gam_connected = True
+        log_event("GAM", "✓ GAM integration ready!")
+        return True
+
+    except Exception as e:
+        log_event("GAM", f"✗ Failed to connect to GAM: {e}")
+        return False
+
+
+def get_or_create_advertiser(advertiser_name: str) -> str:
+    """Get or create an advertiser in GAM."""
+    if not inventory.gam_connected or not inventory.gam_soap_client:
+        return f"SIM-ADV-{uuid.uuid4().hex[:8].upper()}"
+
+    try:
+        advertiser_id = inventory.gam_soap_client.get_or_create_advertiser(advertiser_name)
+        return advertiser_id
+    except Exception as e:
+        log_event("GAM", f"Warning: Could not get/create advertiser: {e}")
+        return f"SIM-ADV-{uuid.uuid4().hex[:8].upper()}"
+
+
+def create_gam_order(
+    order_name: str,
+    advertiser_name: str,
+    agency_name: str = None,
+) -> dict:
+    """Create an order in GAM."""
+    if not inventory.gam_connected or not inventory.gam_soap_client:
+        # Simulation fallback
+        order_id = f"SIM-ORD-{uuid.uuid4().hex[:8].upper()}"
+        return {
             "order_id": order_id,
             "order_name": order_name,
-            "advertiser_name": advertiser_name,
-            "agency_name": agency_name,
-            "trafficker_email": trafficker_email,
             "status": "DRAFT",
-            "created_at": datetime.now().isoformat(),
-            "gam_network_code": self.network_code,
+            "simulated": True,
         }
 
-        self.orders[order_id] = order
-        log_event("GAM", f"Created Order: {order_id}")
-        return order
+    try:
+        # Get or create advertiser
+        advertiser_id = get_or_create_advertiser(advertiser_name)
 
-    def create_line_item(
-        self,
-        order_id: str,
-        line_name: str,
-        ad_unit_id: str,
-        impressions: int,
-        cpm_price: float,
-        start_date: str,
-        end_date: str,
-        targeting: dict = None
-    ) -> dict:
-        """Create a Programmatic Guaranteed line item in GAM."""
-        line_id = f"GAM-LINE-{uuid.uuid4().hex[:8].upper()}"
+        # Create order
+        order = inventory.gam_soap_client.create_order(
+            name=order_name,
+            advertiser_id=advertiser_id,
+            trafficker_id=inventory.default_trafficker_id,
+            notes=f"Created via OpenDirect - Advertiser: {advertiser_name}, Agency: {agency_name or 'Direct'}",
+        )
 
-        line_item = {
+        log_event("GAM", f"✓ Created Order: {order.id} - {order.name}")
+
+        return {
+            "order_id": order.id,
+            "order_name": order.name,
+            "advertiser_id": order.advertiser_id,
+            "status": order.status.value if hasattr(order.status, 'value') else str(order.status),
+            "simulated": False,
+        }
+
+    except Exception as e:
+        log_event("GAM", f"✗ Error creating order: {e}")
+        order_id = f"ERR-ORD-{uuid.uuid4().hex[:8].upper()}"
+        return {
+            "order_id": order_id,
+            "order_name": order_name,
+            "status": "ERROR",
+            "error": str(e),
+            "simulated": True,
+        }
+
+
+def create_gam_line_item(
+    order_id: str,
+    line_name: str,
+    ad_unit_id: str,
+    impressions: int,
+    cpm_price: float,
+    start_date: str,
+    end_date: str,
+    targeting: dict = None,
+) -> dict:
+    """Create a line item in GAM."""
+    if not inventory.gam_connected or not inventory.gam_soap_client:
+        # Simulation fallback
+        line_id = f"SIM-LINE-{uuid.uuid4().hex[:8].upper()}"
+        return {
             "line_id": line_id,
             "order_id": order_id,
             "line_name": line_name,
-            "ad_unit_id": ad_unit_id,
-            "line_item_type": "PROGRAMMATIC_GUARANTEED",
             "impressions": impressions,
             "cpm_price": cpm_price,
             "total_budget": round(cpm_price * impressions / 1000, 2),
-            "start_date": start_date,
-            "end_date": end_date,
-            "targeting": targeting or {},
             "status": "READY",
-            "delivery_status": "NOT_STARTED",
-            "created_at": datetime.now().isoformat(),
+            "simulated": True,
         }
 
-        self.line_items[line_id] = line_item
-        log_event("GAM", f"Created PG Line: {line_id} ({impressions:,} imps @ ${cpm_price} CPM)")
-        return line_item
+    try:
+        # Parse dates
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d")
 
-    def approve_order(self, order_id: str) -> dict:
-        """Approve an order for delivery."""
-        if order_id in self.orders:
-            self.orders[order_id]["status"] = "APPROVED"
-            log_event("GAM", f"Approved Order: {order_id}")
-            return self.orders[order_id]
-        return {"error": "Order not found"}
+        # Build targeting
+        gam_targeting = GAMTargeting(
+            inventory_targeting=GAMInventoryTargeting(
+                targeted_ad_units=[
+                    GAMAdUnitTargeting(ad_unit_id=ad_unit_id, include_descendants=True)
+                ]
+            )
+        )
+
+        # Build goal
+        goal = GAMGoal(
+            goal_type=GAMGoalType.LIFETIME,
+            unit_type=GAMUnitType.IMPRESSIONS,
+            units=impressions,
+        )
+
+        # Build cost
+        cost_per_unit = GAMMoney.from_dollars(cpm_price)
+
+        # Create line item (STANDARD for PG with fixed impressions)
+        line_item = inventory.gam_soap_client.create_line_item(
+            order_id=order_id,
+            name=line_name,
+            line_item_type=GAMLineItemType.STANDARD,
+            targeting=gam_targeting,
+            cost_per_unit=cost_per_unit,
+            goal=goal,
+            start_time=start_dt,
+            end_time=end_dt,
+            cost_type=GAMCostType.CPM,
+            creative_sizes=[(300, 250), (728, 90), (1920, 1080)],  # Include CTV size
+            external_id=f"OD-{uuid.uuid4().hex[:8].upper()}",
+            notes=f"OpenDirect PG Line - {impressions:,} impressions @ ${cpm_price} CPM",
+        )
+
+        log_event("GAM", f"✓ Created Line Item: {line_item.id} - {line_item.name}")
+
+        return {
+            "line_id": line_item.id,
+            "order_id": order_id,
+            "line_name": line_item.name,
+            "impressions": impressions,
+            "cpm_price": cpm_price,
+            "total_budget": round(cpm_price * impressions / 1000, 2),
+            "status": line_item.status.value if hasattr(line_item.status, 'value') else str(line_item.status),
+            "simulated": False,
+        }
+
+    except Exception as e:
+        log_event("GAM", f"✗ Error creating line item: {e}")
+        line_id = f"ERR-LINE-{uuid.uuid4().hex[:8].upper()}"
+        return {
+            "line_id": line_id,
+            "order_id": order_id,
+            "line_name": line_name,
+            "impressions": impressions,
+            "cpm_price": cpm_price,
+            "total_budget": round(cpm_price * impressions / 1000, 2),
+            "status": "ERROR",
+            "error": str(e),
+            "simulated": True,
+        }
 
 
-# Global GAM client
-gam_client = GAMClient(inventory.gam_network_code)
+def approve_gam_order(order_id: str) -> dict:
+    """Approve an order in GAM."""
+    if not inventory.gam_connected or not inventory.gam_soap_client:
+        return {"order_id": order_id, "status": "APPROVED", "simulated": True}
+
+    try:
+        order = inventory.gam_soap_client.approve_order(order_id)
+        log_event("GAM", f"✓ Approved Order: {order.id}")
+        return {
+            "order_id": order.id,
+            "status": order.status.value if hasattr(order.status, 'value') else str(order.status),
+            "simulated": False,
+        }
+    except Exception as e:
+        log_event("GAM", f"Warning: Could not approve order: {e}")
+        return {"order_id": order_id, "status": "APPROVAL_PENDING", "error": str(e)}
 
 # =============================================================================
 # MCP Tool Definitions
@@ -458,7 +670,7 @@ def handle_check_availability(args: dict) -> dict:
 
 
 def handle_book_programmatic_guaranteed(args: dict) -> dict:
-    """Book a PG line directly in GAM."""
+    """Book a PG line directly in GAM (REAL GAM Integration)."""
     product_id = args.get("product_id")
     impressions = args.get("impressions")
     cpm_price = args.get("cpm_price")
@@ -483,18 +695,35 @@ def handle_book_programmatic_guaranteed(args: dict) -> dict:
             "floor_price": product["floor_cpm"]
         }
 
-    # Create GAM order
-    order = gam_client.create_order(
-        order_name=f"{campaign_name} - OpenDirect",
+    # Get ad unit ID (either from GAM or simulation)
+    ad_unit_id = product.get("gam_ad_unit_id")
+    if not ad_unit_id:
+        log_event("GAM", f"Warning: No GAM ad unit for {product_id}, using simulation")
+        ad_unit_id = "0"  # Will use simulation mode
+
+    log_event("GAM", f"Booking PG: {campaign_name} - {impressions:,} imps @ ${cpm_price} CPM")
+
+    # Add timestamp to make order name unique (GAM requires unique names)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Create GAM order (REAL)
+    order = create_gam_order(
+        order_name=f"{campaign_name} - OpenDirect PG - {timestamp}",
         advertiser_name=advertiser_name,
         agency_name=agency_name
     )
 
-    # Create line item
-    line_item = gam_client.create_line_item(
+    if order.get("error"):
+        return {
+            "error": f"Failed to create GAM order: {order.get('error')}",
+            "details": order
+        }
+
+    # Create line item (REAL)
+    line_item = create_gam_line_item(
         order_id=order["order_id"],
-        line_name=f"{product['publisher']} - PG Line",
-        ad_unit_id=product["gam_ad_unit_id"],
+        line_name=f"{product['publisher']} - PG Line - {impressions:,} imps",
+        ad_unit_id=ad_unit_id,
         impressions=impressions,
         cpm_price=cpm_price,
         start_date=start_date,
@@ -502,22 +731,29 @@ def handle_book_programmatic_guaranteed(args: dict) -> dict:
         targeting=targeting
     )
 
-    # Approve order
-    gam_client.approve_order(order["order_id"])
+    if line_item.get("error"):
+        log_event("GAM", f"Warning: Line item creation had issues: {line_item.get('error')}")
+
+    # Approve order (REAL)
+    approval = approve_gam_order(order["order_id"])
 
     # Store in inventory
     inventory.gam_orders[order["order_id"]] = {
         "order": order,
-        "line_items": [line_item]
+        "line_items": [line_item],
+        "approval": approval
     }
 
-    log_event("GAM", f"PG Booking Complete: {order['order_id']}")
+    is_live = not order.get("simulated", True)
+    log_event("GAM", f"{'✓ LIVE' if is_live else '⚡ SIMULATED'} PG Booking Complete: Order {order['order_id']}")
 
     return {
         "booking_type": "programmatic_guaranteed",
         "status": "booked",
+        "live_gam": is_live,
         "gam_order": order,
         "gam_line_item": line_item,
+        "approval_status": approval,
         "product": {
             "id": product_id,
             "name": product["name"],
@@ -530,12 +766,22 @@ def handle_book_programmatic_guaranteed(args: dict) -> dict:
             "start_date": start_date,
             "end_date": end_date
         },
-        "message": "Line booked directly in Google Ad Manager. No DSP action required."
+        "gam_links": {
+            "order_url": f"https://admanager.google.com/{inventory.gam_network_code}#delivery/order/order_overview/order_id={order['order_id']}" if is_live else None,
+            "line_item_url": f"https://admanager.google.com/{inventory.gam_network_code}#delivery/line_item/detail/line_item_id={line_item['line_id']}" if is_live else None,
+        },
+        "message": f"Line booked {'LIVE in Google Ad Manager' if is_live else '(simulated)'}. No DSP action required for PG deals."
     }
 
 
 def handle_create_pmp_deal(args: dict) -> dict:
-    """Create a PMP deal and return Deal ID for DSP."""
+    """Create a PMP deal and return Deal ID for DSP.
+
+    This creates a deal structure that:
+    1. Can be referenced by the DSP for private auction bidding
+    2. Is tracked locally for reporting
+    3. The Deal ID follows OpenRTB conventions
+    """
     product_id = args.get("product_id")
     floor_price = args.get("floor_price")
     impressions = args.get("impressions", 0)
@@ -560,8 +806,12 @@ def handle_create_pmp_deal(args: dict) -> dict:
             "minimum_floor": product["floor_cpm"]
         }
 
-    # Generate Deal ID
-    deal_id = f"PMP-{uuid.uuid4().hex[:8].upper()}"
+    # Generate Deal ID (format: PMP-<network>-<unique>)
+    # NOTE: This is a SIMULATED deal ID for demo purposes.
+    # Real PMP deals require GAM Programmatic Direct features to be enabled.
+    deal_id = f"PMP-{inventory.gam_network_code}-{uuid.uuid4().hex[:8].upper()}"
+
+    log_event("GAM", f"Creating PMP Deal (SIMULATED): {deal_id} - Floor ${floor_price} CPM")
 
     # DSP-specific configuration
     dsp_configs = {
@@ -595,6 +845,7 @@ def handle_create_pmp_deal(args: dict) -> dict:
         "product_id": product_id,
         "product_name": product["name"],
         "publisher": product["publisher"],
+        "gam_ad_unit_id": product.get("gam_ad_unit_id"),
         "floor_price": floor_price,
         "auction_type": "first_price",
         "impressions_estimate": impressions,
@@ -606,6 +857,8 @@ def handle_create_pmp_deal(args: dict) -> dict:
         "target_dsp": target_dsp,
         "status": "active",
         "created_at": datetime.now().isoformat(),
+        "gam_network_code": inventory.gam_network_code,
+        "simulated": True,  # PMP deals are simulated for demo
         "openrtb_params": {
             "id": deal_id,
             "bidfloor": floor_price,
@@ -629,14 +882,16 @@ def handle_create_pmp_deal(args: dict) -> dict:
     }
 
     inventory.pmp_deals[deal_id] = deal
-    log_event("MCP", f"PMP Deal Created: {deal_id} → Send to {dsp_config['platform']}")
+    log_event("GAM", f"✓ PMP Deal Created (SIMULATED): {deal_id} → {dsp_config['platform']}")
 
     return {
         "booking_type": "private_marketplace",
         "status": "deal_created",
+        "simulated": True,  # PMP deals are simulated - GAM Programmatic Direct not enabled
         "deal": deal,
-        "next_step": f"Send Deal ID {deal_id} to {dsp_config['platform']} to activate",
-        "message": "Deal ID created. Buyer must add this deal to their DSP campaign."
+        "next_step": f"Send Deal ID '{deal_id}' to {dsp_config['platform']} to activate",
+        "message": "PMP Deal ID created (SIMULATED for demo). In production, this would be registered in GAM Programmatic Direct.",
+        "note": "This Deal ID is for demo purposes. Real PMP deals require GAM Programmatic Direct features."
     }
 
 
@@ -702,16 +957,20 @@ async def call_tool(request: Request):
 # Main
 # =============================================================================
 
-def print_banner():
+def print_banner(gam_connected: bool = False):
     """Print server banner."""
+    gam_status = "🟢 LIVE" if gam_connected else "🟡 SIMULATION"
+    gam_network = inventory.gam_network_code if gam_connected else "N/A"
+
     if RICH_AVAILABLE:
-        banner = """
+        banner = f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║       PUBLISHER SELLER AGENT - Google Ad Manager Integration ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Publisher: Premium Streaming Network                        ║
 ║  Port: 8001                                                  ║
-║  Integration: Google Ad Manager                              ║
+║  GAM Status: {gam_status:<46} ║
+║  GAM Network: {gam_network:<45} ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Capabilities:                                               ║
 ║    • Programmatic Guaranteed (PG) - Book directly in GAM     ║
@@ -732,13 +991,22 @@ def print_banner():
         print("\n" + "=" * 60)
         print("PUBLISHER SELLER AGENT - GAM Integration")
         print("=" * 60)
-        print("Port: 8001")
+        print(f"Port: 8001")
+        print(f"GAM Status: {gam_status}")
+        print(f"GAM Network: {gam_network}")
         print("=" * 60 + "\n")
 
 
 def main():
     """Run the publisher MCP server."""
-    print_banner()
+    if RICH_AVAILABLE:
+        console.print("\n[bold cyan]Initializing Publisher Seller Agent...[/bold cyan]\n")
+
+    # Initialize GAM connection
+    gam_connected = initialize_gam_connection()
+
+    # Print banner with GAM status
+    print_banner(gam_connected)
 
     if RICH_AVAILABLE:
         console.print("\n[bold green]Starting server...[/bold green]\n")
