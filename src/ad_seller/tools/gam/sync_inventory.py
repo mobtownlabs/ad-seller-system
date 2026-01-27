@@ -1,4 +1,4 @@
-# Author: AgentRange Inc.
+# Author: Green Mountain Systems AI Inc.
 # Donated to IAB Tech Lab
 
 """Sync GAM Inventory Tool - Sync ad units to local product catalog."""

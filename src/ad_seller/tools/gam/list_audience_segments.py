@@ -1,4 +1,4 @@
-# Author: AgentRange Inc.
+# Author: Green Mountain Systems AI Inc.
 # Donated to IAB Tech Lab
 
 """List Audience Segments Tool - List GAM audience segments with IAB taxonomy mapping."""

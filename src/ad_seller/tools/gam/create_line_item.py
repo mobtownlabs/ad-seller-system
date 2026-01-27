@@ -1,4 +1,4 @@
-# Author: AgentRange Inc.
+# Author: Green Mountain Systems AI Inc.
 # Donated to IAB Tech Lab
 
 """Create GAM Line Item Tool - Create line items in Google Ad Manager."""

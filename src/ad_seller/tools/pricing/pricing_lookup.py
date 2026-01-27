@@ -1,4 +1,4 @@
-# Author: AgentRange Inc.
+# Author: Green Mountain Systems AI Inc.
 # Donated to IAB Tech Lab
 
 """Pricing Lookup Tool - Get pricing for products based on buyer context."""

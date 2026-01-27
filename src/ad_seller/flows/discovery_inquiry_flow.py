@@ -1,4 +1,4 @@
-# Author: AgentRange Inc.
+# Author: Green Mountain Systems AI Inc.
 # Donated to IAB Tech Lab
 
 """Discovery & Inquiry Flow - Respond to buyer inventory queries.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Author: AgentRange Inc.
+# Author: Green Mountain Systems AI Inc.
 # Donated to IAB Tech Lab
 
 """DSP Seller Agent - MCP Server
