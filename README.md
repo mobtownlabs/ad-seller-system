@@ -932,4 +932,4 @@ When a PG deal is accepted, the demo:
 
 ## License
 
-MIT
+Apache 2.0
