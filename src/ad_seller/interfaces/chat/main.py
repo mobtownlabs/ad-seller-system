@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Conversational chat interface for buyer interactions.
 
 Enables natural language conversations with buyers for:

@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Pricing tools for seller agents."""
 
 from .pricing_lookup import PricingLookupTool

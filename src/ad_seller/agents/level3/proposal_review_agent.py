@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Proposal Review Agent - Level 3 Functional Agent.
 
 Evaluates incoming proposals, validates against products,

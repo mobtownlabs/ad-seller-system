@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Discovery & Inquiry Flow - Respond to buyer inventory queries.
 
 This flow handles informational queries from buyers:

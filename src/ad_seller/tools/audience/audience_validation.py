@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Audience Validation Tool - Validate buyer audience requests."""
 
 from typing import Any, Optional, Type

@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Audience Validator Agent - Level 3 Functional Agent.
 
 Validates buyer audience requests against product capabilities using

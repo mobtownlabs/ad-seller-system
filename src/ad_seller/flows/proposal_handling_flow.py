@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Proposal Handling Flow - Process incoming buyer proposals.
 
 This flow handles:

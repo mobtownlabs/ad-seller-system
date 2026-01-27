@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Availability tools for seller agents."""
 
 from .avails_check import AvailsCheckTool

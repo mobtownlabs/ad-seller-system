@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """REST API interface for the Ad Seller System."""
 
 from .main import app

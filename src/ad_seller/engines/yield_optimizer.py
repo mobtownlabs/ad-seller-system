@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Yield Optimizer - Short and long-term yield optimization.
 
 Provides recommendations for the Inventory Manager to maximize:

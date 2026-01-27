@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Workflow flows for the Ad Seller System."""
 
 from .product_setup_flow import ProductSetupFlow

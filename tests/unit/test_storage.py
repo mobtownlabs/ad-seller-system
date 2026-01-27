@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Unit tests for Ad Seller System storage backends."""
 
 import pytest

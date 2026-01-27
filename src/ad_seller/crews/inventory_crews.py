@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Inventory Crews - Channel-specific crews for inventory operations.
 
 These crews combine inventory specialists with functional agents

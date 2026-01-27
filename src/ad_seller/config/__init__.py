@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Configuration module."""
 
 from .settings import Settings, get_settings

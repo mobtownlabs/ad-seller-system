@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Google Ad Manager REST API client.
 
 Provides async methods for reading from GAM using the REST API (Beta).

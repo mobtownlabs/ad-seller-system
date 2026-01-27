@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Storage backends for the Ad Seller System.
 
 Supports SQLite (default) and Redis for persistence.

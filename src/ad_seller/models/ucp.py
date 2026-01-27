@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """UCP (User Context Protocol) models for audience validation.
 
 IAB Tech Lab User Context Protocol enables exchange of embeddings encoding

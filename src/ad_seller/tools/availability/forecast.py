@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Forecast Tool - Forecast inventory availability."""
 
 from typing import Type

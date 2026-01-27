@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """CTV Inventory Agent - Level 2 Specialist.
 
 Manages Connected TV and streaming advertising inventory including

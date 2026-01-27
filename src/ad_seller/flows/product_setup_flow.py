@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Product Setup Flow - Define and configure sellable inventory products.
 
 This flow handles:

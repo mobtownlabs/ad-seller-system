@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Pricing tier models for identity-based pricing rules.
 
 Sellers can configure tiered pricing based on buyer identity:

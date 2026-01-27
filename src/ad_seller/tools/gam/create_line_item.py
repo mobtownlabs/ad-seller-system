@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Create GAM Line Item Tool - Create line items in Google Ad Manager."""
 
 from datetime import datetime

@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Data models for the Ad Seller System."""
 
 from .core import (

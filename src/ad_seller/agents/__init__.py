@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """AI agents for the Ad Seller System."""
 
 from .level1.inventory_manager import create_inventory_manager

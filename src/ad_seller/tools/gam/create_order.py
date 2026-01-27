@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Create GAM Order Tool - Create orders in Google Ad Manager."""
 
 from typing import Optional, Type

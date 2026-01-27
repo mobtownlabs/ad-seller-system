@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Pricing Agent - Level 3 Functional Agent.
 
 Manages rate cards, dynamic pricing, floor prices, and tiered

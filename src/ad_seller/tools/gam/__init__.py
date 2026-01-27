@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Google Ad Manager tools for CrewAI agents.
 
 Provides tools for:

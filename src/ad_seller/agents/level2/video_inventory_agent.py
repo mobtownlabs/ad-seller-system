@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Video Inventory Agent - Level 2 Specialist.
 
 Manages web video advertising inventory including pre-roll, mid-roll,

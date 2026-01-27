@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Publisher Seller Agent with GAM Integration - MCP Server
 
 This represents a publisher's sell-side platform that:

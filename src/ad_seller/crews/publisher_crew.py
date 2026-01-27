@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Publisher Crew - Top-level orchestration crew.
 
 The Publisher Crew coordinates all inventory specialists and functional

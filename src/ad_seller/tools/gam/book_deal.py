@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Book Deal in GAM Tool - Orchestrate booking of accepted deals."""
 
 from datetime import datetime

@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Create Private Auction Deal Tool - Create private auction deals in GAM."""
 
 from typing import Optional, Type

@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Native Inventory Agent - Level 2 Specialist.
 
 Manages native advertising inventory including in-feed placements,

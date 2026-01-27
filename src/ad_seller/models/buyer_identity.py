@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Buyer identity models for tiered access and pricing.
 
 The seller agent supports tiered access based on buyer identity:

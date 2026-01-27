@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Base storage backend interface."""
 
 from abc import ABC, abstractmethod

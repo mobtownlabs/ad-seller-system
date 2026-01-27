@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Google Ad Manager SOAP API client.
 
 Provides methods for writing to GAM using the SOAP API.

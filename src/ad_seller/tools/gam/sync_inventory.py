@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Sync GAM Inventory Tool - Sync ad units to local product catalog."""
 
 from typing import Type

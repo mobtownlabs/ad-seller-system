@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Get GAM Pricing Tool - Retrieve pricing information for ad units."""
 
 from typing import Optional, Type

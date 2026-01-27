@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Execution Activation Flow - Sync deals to ad servers.
 
 This flow handles:

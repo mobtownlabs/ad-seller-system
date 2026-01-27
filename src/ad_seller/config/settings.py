@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Configuration settings for the Ad Seller System."""
 
 from functools import lru_cache

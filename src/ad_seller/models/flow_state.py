@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Flow state models for seller workflow orchestration.
 
 These models track the state of seller workflows including product setup,

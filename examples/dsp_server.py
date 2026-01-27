@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """DSP Seller Agent - MCP Server
 
 This represents a demand-side platform that:

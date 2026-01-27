@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Audience validation tools for the Ad Seller System.
 
 These tools enable audience validation, capability reporting, and coverage

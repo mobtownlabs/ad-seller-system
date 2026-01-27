@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Level 3 functional agents."""
 
 from .pricing_agent import create_pricing_agent

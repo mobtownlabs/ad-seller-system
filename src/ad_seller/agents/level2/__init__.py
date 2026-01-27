@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Level 2 inventory specialist agents."""
 
 from .display_inventory_agent import create_display_inventory_agent

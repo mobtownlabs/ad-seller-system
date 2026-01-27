@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Non-Agentic DSP workflow example.
 
 Demonstrates how the seller agent works with traditional DSPs

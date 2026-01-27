@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """UCP (User Context Protocol) Client for audience validation.
 
 This client handles the exchange of embeddings between buyer and seller agents

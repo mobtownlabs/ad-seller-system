@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Avails Check Tool - Check inventory availability."""
 
 from typing import Type

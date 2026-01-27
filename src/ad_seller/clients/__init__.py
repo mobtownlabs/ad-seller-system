@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Protocol clients for OpenDirect 2.1, A2A, and GAM communication."""
 
 from .unified_client import Protocol, UnifiedClient, UnifiedResult

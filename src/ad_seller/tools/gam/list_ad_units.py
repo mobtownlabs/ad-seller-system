@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """List Ad Units Tool - Retrieve available inventory from GAM."""
 
 from typing import Optional, Type

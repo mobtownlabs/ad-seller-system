@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Business logic engines for the Ad Seller System."""
 
 from .pricing_rules_engine import PricingRulesEngine

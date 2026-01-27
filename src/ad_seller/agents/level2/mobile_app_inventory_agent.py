@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Mobile App Inventory Agent - Level 2 Specialist.
 
 Manages mobile application advertising inventory including iOS/Android

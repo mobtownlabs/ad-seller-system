@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Floor Price Check Tool - Verify price against floors."""
 
 from typing import Optional, Type

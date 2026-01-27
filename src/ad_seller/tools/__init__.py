@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """CrewAI tools for the Ad Seller System."""
 
 from .pricing import PricingLookupTool, FloorPriceCheckTool

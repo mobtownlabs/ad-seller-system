@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Unified client providing a common interface for OpenDirect 2.1 and A2A protocols.
 
 Supports OpenDirect 2.1 (agentic-direct) and A2A for natural language interactions

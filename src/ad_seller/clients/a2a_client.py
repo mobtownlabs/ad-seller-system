@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """A2A (Agent-to-Agent) client for natural language interactions.
 
 Implements the A2A protocol for conversational interactions with

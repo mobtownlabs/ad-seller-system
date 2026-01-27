@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Non-Agentic DSP Flow - Support traditional DSPs without buyer agents.
 
 This flow enables the seller agent to operate WITHOUT a buyer agent:

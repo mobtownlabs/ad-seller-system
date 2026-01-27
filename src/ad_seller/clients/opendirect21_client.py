@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """OpenDirect 2.1 client for agentic-direct MCP server.
 
 Connects to the IAB Tech Lab agentic-direct server which implements

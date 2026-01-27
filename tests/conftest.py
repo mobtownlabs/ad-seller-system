@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Pytest configuration and fixtures for Ad Seller System tests."""
 
 import pytest

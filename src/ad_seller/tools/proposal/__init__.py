@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Proposal tools for seller agents."""
 
 from .validation import ProposalValidationTool

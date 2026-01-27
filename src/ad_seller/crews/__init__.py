@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """CrewAI crews for the Ad Seller System."""
 
 from .publisher_crew import create_publisher_crew, PublisherCrew

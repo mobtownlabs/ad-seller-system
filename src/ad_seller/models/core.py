@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Core data models for programmatic advertising.
 
 These models represent common ad tech entities used across OpenDirect and

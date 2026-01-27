@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Inventory Manager - Level 1 Strategic Agent.
 
 The Inventory Manager is the top-level orchestrator for the seller system.

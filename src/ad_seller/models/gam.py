@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Google Ad Manager (GAM) data models.
 
 These models represent GAM entities for integration with the ad seller system.

@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Upsell Agent - Level 3 Functional Agent.
 
 Identifies opportunities to expand deals, cross-sell inventory,

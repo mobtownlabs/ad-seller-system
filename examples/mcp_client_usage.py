@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """MCP Client usage example.
 
 Demonstrates connecting to the IAB Tech Lab agentic-direct server

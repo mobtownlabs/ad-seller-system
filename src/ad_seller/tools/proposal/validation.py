@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Proposal Validation Tool - Validate incoming proposals."""
 
 from typing import Any, Type

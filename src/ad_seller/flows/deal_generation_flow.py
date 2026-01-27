@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Deal ID Generation Flow - Create Deal IDs from accepted proposals.
 
 This flow handles:

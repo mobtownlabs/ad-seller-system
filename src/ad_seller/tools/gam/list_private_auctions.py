@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """List Private Auctions Tool - List private auctions in GAM."""
 
 from typing import Type

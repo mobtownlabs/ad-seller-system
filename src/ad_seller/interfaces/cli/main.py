@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """CLI interface for seller operations.
 
 Provides commands for:

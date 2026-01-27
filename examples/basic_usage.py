@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Basic usage example for the Ad Seller System.
 
 Demonstrates:

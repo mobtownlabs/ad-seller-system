@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """List Audience Segments Tool - List GAM audience segments with IAB taxonomy mapping."""
 
 from typing import Optional, Type

@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Pricing Rules Engine - Tiered pricing by buyer identity.
 
 Evaluates pricing based on:

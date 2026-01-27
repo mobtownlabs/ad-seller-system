@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Counter Proposal Tool - Generate counter-proposal terms."""
 
 from typing import Optional, Type

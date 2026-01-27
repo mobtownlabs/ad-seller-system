@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Coverage Calculator Tool - Calculate audience coverage for targeting."""
 
 from typing import Any, Optional, Type

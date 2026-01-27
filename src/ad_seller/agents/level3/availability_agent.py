@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Availability Agent - Level 3 Functional Agent.
 
 Manages inventory forecasting, availability checking, and pacing

@@ -1,3 +1,6 @@
+# Author: AgentRange Inc.
+# Donated to IAB Tech Lab
+
 """Pricing Lookup Tool - Get pricing for products based on buyer context."""
 
 from typing import Any, Optional, Type
