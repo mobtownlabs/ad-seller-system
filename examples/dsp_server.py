@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Amazon DSP Seller Agent - MCP Server
+"""DSP Seller Agent - MCP Server
 
-This represents Amazon DSP as a demand-side platform that:
+This represents a demand-side platform that:
 1. Receives Deal IDs from buyers (PMP deals from publishers)
 2. Activates deals on campaigns
 3. Books Performance and Mobile App campaigns directly
@@ -13,7 +13,7 @@ The buyer agent can:
 
 Usage:
     cd ad_seller_system/examples
-    python dsp_amazon_server.py
+    python dsp_server.py
 
 Runs on port 8002
 """
@@ -53,11 +53,11 @@ console = Console() if RICH_AVAILABLE else None
 # =============================================================================
 
 class DSPInventory:
-    """Amazon DSP inventory and campaign management."""
+    """DSP inventory and campaign management."""
 
     def __init__(self):
-        self.dsp_name = "Amazon DSP"
-        self.dsp_id = "amazon-dsp"
+        self.dsp_name = "DSP"
+        self.dsp_id = "generic-dsp"
 
         # Performance Display Products
         self.products = [
@@ -75,7 +75,7 @@ class DSPInventory:
             },
             {
                 "id": "perf-display-002",
-                "name": "Performance Display - Amazon.com Properties",
+                "name": "Performance Display - Premium Properties",
                 "channel": "display",
                 "type": "performance",
                 "base_cpm": 12.00,
@@ -206,7 +206,7 @@ MCP_TOOLS = [
     },
     {
         "name": "create_performance_campaign",
-        "description": "Create a Performance Display campaign in Amazon DSP",
+        "description": "Create a Performance Display campaign in DSP",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -509,7 +509,7 @@ TOOL_HANDLERS = {
 # =============================================================================
 
 app = FastAPI(
-    title="Amazon DSP Seller Agent",
+    title="DSP Seller Agent",
     description="DSP for Performance and Mobile campaigns",
     version="1.0.0"
 )
@@ -518,7 +518,7 @@ app = FastAPI(
 @app.get("/")
 async def root():
     return {
-        "name": "Amazon DSP Seller Agent",
+        "name": "DSP Seller Agent",
         "dsp": inventory.dsp_name,
         "port": 8002,
         "capabilities": ["deal_attachment", "performance_display", "mobile_app"]
@@ -562,9 +562,9 @@ def print_banner():
     if RICH_AVAILABLE:
         banner = """
 ╔══════════════════════════════════════════════════════════════╗
-║              AMAZON DSP SELLER AGENT                         ║
+║              DSP SELLER AGENT                         ║
 ╠══════════════════════════════════════════════════════════════╣
-║  Platform: Amazon Demand-Side Platform                       ║
+║  Platform: Demand-Side Platform                       ║
 ║  Port: 8002                                                  ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Capabilities:                                               ║
@@ -586,7 +586,7 @@ def print_banner():
         console.print(Panel(banner.strip(), style="bold yellow"))
     else:
         print("\n" + "=" * 60)
-        print("AMAZON DSP SELLER AGENT")
+        print("DSP SELLER AGENT")
         print("=" * 60)
         print("Port: 8002")
         print("=" * 60 + "\n")

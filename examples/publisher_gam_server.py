@@ -577,7 +577,7 @@ MCP_TOOLS = [
                 "buyer_seat_id": {"type": "string"},
                 "target_dsp": {
                     "type": "string",
-                    "enum": ["amazon_dsp", "the_trade_desk", "dv360", "xandr"]
+                    "enum": ["generic_dsp", "the_trade_desk", "dv360", "xandr"]
                 }
             },
             "required": ["product_id", "floor_price", "buyer_seat_id"]
@@ -793,7 +793,7 @@ def handle_create_pmp_deal(args: dict) -> dict:
     advertiser_name = args.get("advertiser_name", "Unknown")
     agency_name = args.get("agency_name", "Direct")
     buyer_seat_id = args.get("buyer_seat_id")
-    target_dsp = args.get("target_dsp", "amazon_dsp")
+    target_dsp = args.get("target_dsp", "generic_dsp")
     start_date = args.get("start_date", "2026-03-01")
     end_date = args.get("end_date", "2026-06-30")
 
@@ -820,10 +820,10 @@ def handle_create_pmp_deal(args: dict) -> dict:
 
     # DSP-specific configuration
     dsp_configs = {
-        "amazon_dsp": {
-            "platform": "Amazon DSP",
-            "seat_id_format": "amazon-dsp-*",
-            "activation_url": "https://advertising.amazon.com/dsp/deals",
+        "generic_dsp": {
+            "platform": "DSP",
+            "seat_id_format": "dsp-*",
+            "activation_url": "https://dsp.example.com/deals",
         },
         "the_trade_desk": {
             "platform": "The Trade Desk",
@@ -842,7 +842,7 @@ def handle_create_pmp_deal(args: dict) -> dict:
         }
     }
 
-    dsp_config = dsp_configs.get(target_dsp, dsp_configs["amazon_dsp"])
+    dsp_config = dsp_configs.get(target_dsp, dsp_configs["generic_dsp"])
 
     deal = {
         "deal_id": deal_id,

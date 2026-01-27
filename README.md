@@ -619,13 +619,11 @@ LLM_TEMPERATURE=0.3
 ```
 ad_seller_system/
 ├── examples/              # Runnable example scripts
-│   ├── tiered_pricing.py
-│   ├── opendirect_connection.py
-│   ├── storage_demo.py
-│   ├── audience_validation.py
+│   ├── basic_usage.py            # Basic API usage
+│   ├── mcp_client_usage.py       # MCP client examples
+│   ├── non_agentic_dsp.py        # Non-agentic DSP example
 │   ├── publisher_gam_server.py   # Live GAM integration demo
-│   ├── buyer_demo.py             # Buyer simulation for demos
-│   └── dsp_amazon_server.py      # DSP server simulation
+│   └── dsp_server.py             # DSP server simulation
 ├── src/ad_seller/
 │   ├── agents/            # CrewAI agents
 │   │   ├── level1/        # Inventory Manager
