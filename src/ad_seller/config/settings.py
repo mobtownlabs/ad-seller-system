@@ -6,14 +6,18 @@
 from functools import lru_cache
 from typing import Optional
 
+from dotenv import find_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Find .env file by searching up from current working directory
+_ENV_FILE = find_dotenv(usecwd=True)
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_ENV_FILE if _ENV_FILE else None,
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",

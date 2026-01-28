@@ -14,6 +14,11 @@ Provides commands for:
 import asyncio
 from typing import Optional
 
+# Load .env file before any other imports that might need env vars
+from dotenv import find_dotenv, load_dotenv
+
+load_dotenv(find_dotenv(usecwd=True))
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
